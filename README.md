@@ -75,8 +75,9 @@ Opens in new tab
 └─ No popup shown      └─ Popup auto-opens
 ```
 
-## Supported Shopping Sites
+## Supported Sites
 
+### Shopping Sites
 - Amazon (all regions)
 - AliExpress (all regions)
 - eBay (all regions)
@@ -87,6 +88,12 @@ Opens in new tab
 - Wish
 - Gearbest
 - Banggood
+
+### Travel & Booking Sites
+- Booking.com
+- Expedia
+- Airbnb
+- Trivago
 
 ## Installation
 
