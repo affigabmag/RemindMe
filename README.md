@@ -2,19 +2,15 @@
 
 A Chrome extension that reminds you to use cashback and coupon sites while shopping online.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🌐 Shopping Site Detected!                             ✕   │
-├─────────────────────────────────────────────────────────────┤
-│  💰 Remember to use:                                        │
-├─────────────────────────────────────────────────────────────┤
-│  💳 Cashback.co.il                                          │
-│                                                              │
-│  🏷️  ali-buy.com/aliexpress-coupons/                        │
-│                                                              │
-│  🔐 Aliexpress portals (Incognito)                          │
-└─────────────────────────────────────────────────────────────┘
-```
+### Popup Preview
+
+| Content |
+|---------|
+| 🌐 **Shopping Site Detected!** [✕] |
+| **💰 Remember to use:** |
+| 💳 Cashback.co.il |
+| 🏷️ ali-buy.com/aliexpress-coupons/ |
+| 🔐 Aliexpress portals (Incognito) |
 
 ## How It Works
 
@@ -139,23 +135,13 @@ RemindMe/
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│          Chrome Extension: RemindMe                  │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  📋 manifest.json ──────► Defines extension config  │
-│        ↓                                              │
-│  🔧 background.js ──────► Icon switching            │
-│        ↓                   & popup toggle            │
-│  📄 content-script.js ──► Detects shopping sites    │
-│        ↓                   & injects sidebar        │
-│  🎨 popup.css ─────────► Styles & animations       │
-│        ↓                                              │
-│  🖼️  icons/ ────────────► Yellow/Green icons        │
-│                                                      │
-└─────────────────────────────────────────────────────┘
-```
+| Component | Icon | Purpose |
+|-----------|------|---------|
+| **manifest.json** | 📋 | Defines extension config & permissions |
+| **background.js** | 🔧 | Icon switching & popup toggle logic |
+| **content-script.js** | 📄 | Detects shopping sites & injects sidebar |
+| **popup.css** | 🎨 | Styles & animations for sidebar |
+| **icons/** | 🖼️ | Yellow/Green indicator icons |
 
 ## Tech Stack
 
