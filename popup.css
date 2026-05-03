@@ -41,6 +41,9 @@
   font-size: 18px;
   color: #fff;
   margin: 0;
+}
+
+#discounts-popup-title {
   animation: blink 1.5s infinite;
 }
 

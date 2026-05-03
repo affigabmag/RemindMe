@@ -32,7 +32,7 @@ function createPopup() {
   container.innerHTML = `
     <div id="discounts-popup-sidebar">
       <div id="discounts-popup-header">
-        <span>💰 Remember to use:</span>
+        <span id="discounts-popup-title">💰 Remember to use:</span>
         <div id="discounts-popup-controls">
           <a href="https://github.com/affigabmag/RemindMe" target="_blank" id="discounts-popup-github" title="View on GitHub">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
