@@ -29,7 +29,15 @@
     "*://*.etsy.com/*",
     "*://wish.com/*",
     "*://gearbest.com/*",
-    "*://banggood.com/*"
+    "*://banggood.com/*",
+    "*://booking.com/*",
+    "*://*.booking.com/*",
+    "*://expedia.com/*",
+    "*://*.expedia.com/*",
+    "*://airbnb.com/*",
+    "*://*.airbnb.com/*",
+    "*://trivago.com/*",
+    "*://*.trivago.com/*"
   ],
 
   "background": {
@@ -55,7 +63,15 @@
         "*://*.etsy.com/*",
         "*://wish.com/*",
         "*://gearbest.com/*",
-        "*://banggood.com/*"
+        "*://banggood.com/*",
+        "*://booking.com/*",
+        "*://*.booking.com/*",
+        "*://expedia.com/*",
+        "*://*.expedia.com/*",
+        "*://airbnb.com/*",
+        "*://*.airbnb.com/*",
+        "*://trivago.com/*",
+        "*://*.trivago.com/*"
       ],
       "js": ["content-script.js"],
       "run_at": "document_end"

@@ -8,7 +8,11 @@ const SHOPPING_SITES = [
   'etsy.com',
   'wish.com',
   'gearbest.com',
-  'banggood.com'
+  'banggood.com',
+  'booking.com',
+  'expedia.com',
+  'airbnb.com',
+  'trivago.com'
 ];
 
 function isShoppingSite(url) {
