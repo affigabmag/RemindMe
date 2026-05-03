@@ -1,6 +1,44 @@
-# RemindMe
+# 💰 RemindMe
 
 A Chrome extension that reminds you to use cashback and coupon sites while shopping online.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🌐 Shopping Site Detected!                             ✕   │
+├─────────────────────────────────────────────────────────────┤
+│  💰 Remember to use:                                        │
+├─────────────────────────────────────────────────────────────┤
+│  💳 Cashback.co.il                                          │
+│                                                              │
+│  🏷️  ali-buy.com/aliexpress-coupons/                        │
+│                                                              │
+│  🔐 Aliexpress portals (Incognito)                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## How It Works
+
+```
+User browses web
+        ↓
+🔍 Extension detects URL
+        ↓
+    Shopping site?
+     ↙         ↘
+   YES         NO
+    ↓           ↓
+  🟢 Icon    🟡 Icon
+  turns      turns
+  GREEN      YELLOW
+    ↓           ↓
+  💬 Popup    (dormant)
+  appears
+    ↓
+User clicks link
+    ↓
+Opens in new tab
+(or incognito for portals)
+```
 
 ## Features
 
@@ -18,6 +56,28 @@ A Chrome extension that reminds you to use cashback and coupon sites while shopp
 🔔 **Blinking Header** — Eye-catching animated reminder
 
 ⏬ **Compact Design** — Fixed-size sidebar popup, doesn't obstruct browsing
+
+## Visual Feature Overview
+
+| Feature | Icon | Description |
+|---------|------|-------------|
+| **Shopping Detection** | 🎯 | Automatically detects shopping sites |
+| **Icon Indicator** | 🟢🟡 | Green = active, Yellow = dormant |
+| **Popup Reminder** | 💬 | Auto-opens compact sidebar on right |
+| **Quick Links** | 🔗 | One-click access to cashback sites |
+| **Incognito Mode** | 🔐 | AliExpress portals open privately |
+| **Easy Close** | ✕ | Close popup with single click |
+| **Reopen** | 🔔 | Click icon to show popup again |
+| **No Bloat** | ⚡ | Lightweight, zero dependencies |
+
+## Icon States
+
+```
+🟡 YELLOW              🟢 GREEN
+(Default)              (Shopping Site)
+└─ Other websites      └─ Amazon, AliExpress, etc.
+└─ No popup shown      └─ Popup auto-opens
+```
 
 ## Supported Shopping Sites
 
@@ -75,6 +135,26 @@ RemindMe/
 │   └── icon-green-128.png
 ├── LICENSE                # MIT License
 └── README.md              # This file
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│          Chrome Extension: RemindMe                  │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  📋 manifest.json ──────► Defines extension config  │
+│        ↓                                              │
+│  🔧 background.js ──────► Icon switching            │
+│        ↓                   & popup toggle            │
+│  📄 content-script.js ──► Detects shopping sites    │
+│        ↓                   & injects sidebar        │
+│  🎨 popup.css ─────────► Styles & animations       │
+│        ↓                                              │
+│  🖼️  icons/ ────────────► Yellow/Green icons        │
+│                                                      │
+└─────────────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
