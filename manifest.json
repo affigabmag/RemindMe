@@ -1,0 +1,86 @@
+{
+  "manifest_version": 3,
+  "name": "RemindMe",
+  "version": "1.0.0",
+  "description": "Get reminded to use cashback & coupon sites when shopping online",
+
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "storage",
+    "windows"
+  ],
+
+  "host_permissions": [
+    "*://amazon.com/*",
+    "*://*.amazon.com/*",
+    "*://aliexpress.com/*",
+    "*://*.aliexpress.com/*",
+    "*://ebay.com/*",
+    "*://*.ebay.com/*",
+    "*://walmart.com/*",
+    "*://*.walmart.com/*",
+    "*://target.com/*",
+    "*://*.target.com/*",
+    "*://bestbuy.com/*",
+    "*://*.bestbuy.com/*",
+    "*://etsy.com/*",
+    "*://*.etsy.com/*",
+    "*://wish.com/*",
+    "*://gearbest.com/*",
+    "*://banggood.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://amazon.com/*",
+        "*://*.amazon.com/*",
+        "*://aliexpress.com/*",
+        "*://*.aliexpress.com/*",
+        "*://ebay.com/*",
+        "*://*.ebay.com/*",
+        "*://walmart.com/*",
+        "*://*.walmart.com/*",
+        "*://target.com/*",
+        "*://*.target.com/*",
+        "*://bestbuy.com/*",
+        "*://*.bestbuy.com/*",
+        "*://etsy.com/*",
+        "*://*.etsy.com/*",
+        "*://wish.com/*",
+        "*://gearbest.com/*",
+        "*://banggood.com/*"
+      ],
+      "js": ["content-script.js"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "action": {
+    "default_title": "RemindMe",
+    "default_icon": {
+      "16": "icons/icon-yellow-16.png",
+      "48": "icons/icon-yellow-48.png",
+      "128": "icons/icon-yellow-128.png"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon-yellow-16.png",
+    "48": "icons/icon-yellow-48.png",
+    "128": "icons/icon-yellow-128.png"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.css"],
+      "matches": ["*://*/*"]
+    }
+  ]
+}
