@@ -114,3 +114,37 @@ document.addEventListener('click', (e) => {
     });
   }
 }, true);
+
+let isDragging = false;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+document.addEventListener('mousedown', (e) => {
+  const header = e.target.closest('#discounts-popup-header');
+  if (!header) return;
+
+  isDragging = true;
+  const container = document.getElementById('discounts-popup-container');
+  const rect = container.getBoundingClientRect();
+
+  dragOffsetX = e.clientX - rect.left;
+  dragOffsetY = e.clientY - rect.top;
+}, true);
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+
+  const container = document.getElementById('discounts-popup-container');
+  if (!container) return;
+
+  const newX = e.clientX - dragOffsetX;
+  const newY = e.clientY - dragOffsetY;
+
+  container.style.left = newX + 'px';
+  container.style.top = newY + 'px';
+  container.style.right = 'auto';
+}, true);
+
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+}, true);
