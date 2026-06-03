@@ -1,4 +1,4 @@
-const VERSION = "01.12";
+const VERSION = "01.13";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -380,8 +380,8 @@ function getSettingsHTML(reminders) {
         <button class="direction-toggle" id="header-add" data-action="add" title="Add new reminder" style="background: #28a745; border-color: #218838;">➕ ${getLabel('add')}</button>
         <button class="direction-toggle" id="header-export" data-action="export" title="Export to CSV" style="background: #17a2b8; border-color: #138496;">📥 Export</button>
         <button class="direction-toggle" id="header-import" data-action="import" title="Import from CSV" style="background: #6f42c1; border-color: #5a32a3;">📤 Import</button>
-        <button class="direction-toggle" id="toggle-ltr" data-dir="ltr" title="English (LTR)" style="opacity: ${rtl ? '0.5' : '1'}; background: ${rtl ? 'rgba(255,255,255,0.1)' : 'rgba(0,123,255,0.3)'};">LTR</button>
-        <button class="direction-toggle" id="toggle-rtl" data-dir="rtl" title="עברית (RTL)" style="opacity: ${rtl ? '1' : '0.5'}; background: ${rtl ? 'rgba(0,123,255,0.3)' : 'rgba(255,255,255,0.1)'};">RTL</button>
+        <button class="direction-toggle" id="toggle-ltr" data-dir="ltr" title="English (LTR)" style="opacity: ${rtl ? '0.6' : '1'}; background: ${rtl ? 'rgba(255,255,255,0.2)' : '#007bff'}; color: ${rtl ? 'rgba(255,255,255,0.5)' : '#fff'};">LTR</button>
+        <button class="direction-toggle" id="toggle-rtl" data-dir="rtl" title="עברית (RTL)" style="opacity: ${rtl ? '1' : '0.6'}; background: ${rtl ? '#007bff' : 'rgba(255,255,255,0.2)'}; color: ${rtl ? '#fff' : 'rgba(255,255,255,0.5)'};">RTL</button>
         <button class="settings-close" data-close>✕</button>
       </div>
     </div>
