@@ -338,7 +338,7 @@ function getSettingsHTML(reminders) {
       .btn-import { background: #6f42c1; color: white; font-size: 16px; }
       .btn-import:hover { background: #5a32a3; }
       .direction-toggle { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
-      .direction-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); }
+      .direction-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); transform: scale(1.1); }
     </style>
     <div class="settings-header">
       <h1>⚙️ ${getLabel('settings')}</h1>
