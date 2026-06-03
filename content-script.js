@@ -234,7 +234,7 @@ function getSettingsHTML(reminders) {
       <button class="icon-btn" data-action="edit" data-index="${index}" title="Edit" style="background: #007bff;">✏️</button>
       <button class="icon-btn" data-action="delete" data-index="${index}" title="Delete" style="background: #dc3545;">🗑️</button>
     </td>`;
-    const reminderCell = `<td>${escapeHtml(item.reminder)}</td>`;
+    const reminderCell = `<td>${item.reminder}</td>`;
     const domainCell = `<td>${escapeHtml(item.domain)}</td>`;
 
     // For RTL, reverse the order: Actions | Domain | Reminder
@@ -261,6 +261,9 @@ function getSettingsHTML(reminders) {
       .settings-table thead { background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid rgba(255,255,255,0.15); }
       .settings-table th { padding: 12px 16px; text-align: ${rtl ? 'right' : 'left'}; font-weight: 600; color: #fff; font-size: 14px; }
       .settings-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 14px; text-align: ${rtl ? 'right' : 'left'}; }
+      .settings-table a { color: #00bfff; text-decoration: underline; cursor: pointer; }
+      .settings-table a:hover { color: #00d4ff; text-decoration: underline; }
+      .settings-table b { font-weight: bold; color: #fff; }
       .settings-table tbody tr:hover { background: rgba(255,255,255,0.05); }
       .settings-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: ${rtl ? 'flex-start' : 'flex-start'}; flex-direction: ${rtl ? 'row-reverse' : 'row'}; }
       .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 6px 8px; border-radius: 4px; transition: all 0.2s; color: white; font-weight: bold; }
@@ -270,6 +273,10 @@ function getSettingsHTML(reminders) {
       .btn-add:hover { background: #218838; }
       .btn-save { background: #007bff; color: white; font-size: 16px; }
       .btn-save:hover { background: #0056b3; }
+      .btn-export { background: #17a2b8; color: white; font-size: 16px; }
+      .btn-export:hover { background: #138496; }
+      .btn-import { background: #6f42c1; color: white; font-size: 16px; }
+      .btn-import:hover { background: #5a32a3; }
     </style>
     <div class="settings-header">
       <h1>⚙️ ${getLabel('settings')}</h1>
@@ -283,8 +290,11 @@ function getSettingsHTML(reminders) {
         <tbody>${rows}</tbody>
       </table>
       <div class="settings-actions">
-        <button class="btn btn-add" data-action="add">➕ ${getLabel('add')}</button>
-        <button class="btn btn-save" data-action="save">💾 ${getLabel('save')}</button>
+        <button class="btn btn-add" data-action="add" title="Add new reminder">➕ ${getLabel('add')}</button>
+        <button class="btn btn-save" data-action="save" title="Save all changes">💾 ${getLabel('save')}</button>
+        <button class="btn btn-export" data-action="export" title="Export to CSV">📥 Export</button>
+        <button class="btn btn-import" data-action="import" title="Import from CSV">📤 Import</button>
+        <input type="file" id="csv-import-input" accept=".csv" style="display: none;">
       </div>
     </div>
   `;
@@ -304,6 +314,24 @@ function setupSettingsModal(modal) {
   // Save button
   modal.querySelector('[data-action="save"]').addEventListener('click', () => {
     showConfirmDialog(getLabel('saved'));
+  });
+
+  // Export button
+  modal.querySelector('[data-action="export"]').addEventListener('click', () => {
+    exportToCSV();
+  });
+
+  // Import button
+  modal.querySelector('[data-action="import"]').addEventListener('click', () => {
+    document.getElementById('csv-import-input').click();
+  });
+
+  // Handle CSV file import
+  const fileInput = document.getElementById('csv-import-input');
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      importFromCSV(e.target.files[0]);
+    }
   });
 
   // Event delegation for edit/delete on table rows
@@ -352,6 +380,9 @@ function showReminderDialog(index, item) {
       .dialog-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #fff; }
       .dialog-form-group { margin-bottom: 15px; }
       .dialog-label { display: block; margin-bottom: 5px; font-weight: 500; color: #fff; font-size: 14px; text-align: ${rtl ? 'right' : 'left'}; }
+      .dialog-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-direction: ${rtl ? 'row-reverse' : 'row'}; }
+      .toolbar-btn { padding: 6px 10px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; border-radius: 3px; font-weight: 600; font-size: 12px; }
+      .toolbar-btn:hover { background: rgba(255,255,255,0.2); border-color: #007bff; }
       .dialog-input { width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(255,255,255,0.15); color: #ffffff; font-size: 14px; font-family: inherit; text-align: ${rtl ? 'right' : 'left'}; box-sizing: border-box; }
       .dialog-input::placeholder { color: rgba(255,255,255,0.5); }
       .dialog-input:focus { outline: none; border-color: #007bff; background: rgba(255,255,255,0.15); color: #ffffff; text-shadow: 0 0 4px rgba(0,123,255,0.5); box-shadow: 0 0 0 3px rgba(0,123,255,0.25); border-width: 2px; }
@@ -366,7 +397,12 @@ function showReminderDialog(index, item) {
     <div class="dialog-title">${titleText}</div>
     <div class="dialog-form-group">
       <label class="dialog-label">${rtl ? 'טקסט תזכורת' : 'Reminder Text'}</label>
-      <textarea class="dialog-input" id="dialog-reminder" placeholder="${rtl ? 'למשל, השתמש ב-Cashback.co.il' : 'e.g., Use Cashback.co.il'}" rows="4" style="resize: vertical;">${item ? escapeHtml(item.reminder) : ''}</textarea>
+      <div class="dialog-toolbar">
+        <button class="toolbar-btn" id="format-bold" type="button" title="Bold (select text first)"><b>B</b></button>
+        <button class="toolbar-btn" id="format-link" type="button" title="Link (select text first)">🔗</button>
+        <button class="toolbar-btn" id="format-preview" type="button" title="Preview as HTML">👁️</button>
+      </div>
+      <textarea class="dialog-input" id="dialog-reminder" placeholder="${rtl ? 'למשל, השתמש ב-Cashback.co.il' : 'e.g., Use Cashback.co.il'}" rows="4" style="resize: vertical;">${item ? item.reminder : ''}</textarea>
     </div>
     <div class="dialog-form-group">
       <label class="dialog-label">${rtl ? 'דומיין/URL' : 'Domain/URL'}</label>
@@ -383,6 +419,24 @@ function showReminderDialog(index, item) {
 
   const reminderInput = dialog.querySelector('#dialog-reminder');
   reminderInput.focus();
+
+  // Format buttons
+  dialog.querySelector('#format-bold').addEventListener('click', (e) => {
+    e.preventDefault();
+    wrapSelectedText(reminderInput, '<b>', '</b>');
+  });
+
+  dialog.querySelector('#format-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    showURLDialog((url) => {
+      wrapSelectedText(reminderInput, `<a href="${url}">`, '</a>');
+    });
+  });
+
+  dialog.querySelector('#format-preview').addEventListener('click', (e) => {
+    e.preventDefault();
+    showHTMLPreviewDialog(reminderInput.value);
+  });
 
   dialog.querySelector('#dialog-cancel').addEventListener('click', () => {
     overlay.remove();
@@ -518,6 +572,270 @@ function showConfirmDialog(message) {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.remove();
   });
+}
+
+function escapeCSVField(field) {
+  if (!field) return '""';
+  const str = String(field);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return `"${str}"`;
+}
+
+function exportToCSV() {
+  chrome.storage.local.get(['reminders'], (result) => {
+    const reminders = result.reminders || [];
+    if (reminders.length === 0) {
+      showConfirmDialog('No reminders to export');
+      return;
+    }
+
+    // Create CSV content with proper escaping
+    const headers = ['Reminder', 'Domain/URL'];
+    const headerRow = headers.map(h => escapeCSVField(h)).join(',');
+    const rows = reminders.map(item => {
+      return [escapeCSVField(item.reminder), escapeCSVField(item.domain)].join(',');
+    });
+
+    const csv = [headerRow, ...rows].join('\r\n');
+
+    // Log for debugging
+    console.log('📊 CSV EXPORT DEBUG:');
+    console.log('Total reminders:', reminders.length);
+    console.log('CSV content:');
+    console.log(csv);
+    console.log('---');
+
+    // Create blob and download with timestamp filename
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const timestamp = getTimestamp();
+    a.download = `${timestamp}.reminders.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showConfirmDialog(`✅ Exported ${reminders.length} reminders. Check console for CSV content.`);
+  });
+}
+
+function importFromCSV(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const csv = e.target.result;
+      const lines = csv.trim().split('\n');
+
+      if (lines.length < 2) {
+        showConfirmDialog('Invalid CSV format');
+        return;
+      }
+
+      // Skip header and parse rows
+      const reminders = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        // Simple CSV parser (handles quoted fields)
+        const matches = line.match(/"([^"]*)"|([^,]+)/g);
+        if (matches && matches.length >= 2) {
+          const reminder = matches[0].replace(/^"|"$/g, '').replace(/""/g, '"');
+          const domain = matches[1].replace(/^"|"$/g, '').replace(/""/g, '"');
+
+          if (reminder && domain) {
+            reminders.push({ reminder, domain });
+          }
+        }
+      }
+
+      if (reminders.length === 0) {
+        showConfirmDialog('No valid reminders found in file');
+        return;
+      }
+
+      // Ask user if they want to replace or merge
+      const confirmMsg = `Import ${reminders.length} reminders?\n\nReplace existing or merge?`;
+      chrome.storage.local.get(['reminders'], (result) => {
+        const existingCount = (result.reminders || []).length;
+        const mergeMsg = existingCount > 0
+          ? `Found ${existingCount} existing. Import will replace them.`
+          : '';
+
+        chrome.storage.local.set({ reminders }, () => {
+          showConfirmDialog(`✅ Imported ${reminders.length} reminders`);
+          showSettingsModal();
+        });
+      });
+    } catch (error) {
+      showConfirmDialog('Error parsing CSV file');
+      console.error('CSV import error:', error);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function getTimestamp() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}.${month}.${day}.${hours}.${minutes}.${seconds}`;
+}
+
+function showURLDialog(callback) {
+  const rtl = isRTL();
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5); z-index: 2147483648;
+    display: flex; align-items: center; justify-content: center;
+  `;
+
+  const dialog = document.createElement('div');
+  dialog.style.cssText = `
+    background: rgba(45, 52, 54, 0.95); border-radius: 8px;
+    padding: 30px; max-width: 400px; width: 90%;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    direction: ${rtl ? 'rtl' : 'ltr'};
+  `;
+
+  dialog.innerHTML = `
+    <style>
+      .dialog-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #fff; }
+      .dialog-form-group { margin-bottom: 15px; }
+      .dialog-label { display: block; margin-bottom: 5px; font-weight: 500; color: #fff; font-size: 14px; }
+      .dialog-input { width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(255,255,255,0.15); color: #ffffff; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+      .dialog-input::placeholder { color: rgba(255,255,255,0.5); }
+      .dialog-input:focus { outline: none; border-color: #007bff; background: rgba(255,255,255,0.15); color: #ffffff; text-shadow: 0 0 4px rgba(0,123,255,0.5); box-shadow: 0 0 0 3px rgba(0,123,255,0.25); border-width: 2px; }
+      .dialog-buttons { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; flex-direction: ${rtl ? 'row-reverse' : 'row'}; }
+      .dialog-btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; }
+      .dialog-btn-cancel { background: #6c757d; color: white; }
+      .dialog-btn-cancel:hover { background: #5a6268; }
+      .dialog-btn-ok { background: #007bff; color: white; }
+      .dialog-btn-ok:hover { background: #0056b3; }
+    </style>
+    <div class="dialog-title">Enter URL</div>
+    <div class="dialog-form-group">
+      <label class="dialog-label">URL:</label>
+      <input type="text" class="dialog-input" id="url-input" placeholder="https://example.com" value="https://">
+    </div>
+    <div class="dialog-buttons">
+      <button class="dialog-btn dialog-btn-cancel" id="url-cancel">Cancel</button>
+      <button class="dialog-btn dialog-btn-ok" id="url-ok">OK</button>
+    </div>
+  `;
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+
+  const urlInput = dialog.querySelector('#url-input');
+  urlInput.focus();
+  urlInput.select();
+
+  dialog.querySelector('#url-cancel').addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  dialog.querySelector('#url-ok').addEventListener('click', () => {
+    const url = urlInput.value.trim();
+    if (url && url !== 'https://') {
+      callback(url);
+    }
+    overlay.remove();
+  });
+
+  urlInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      dialog.querySelector('#url-ok').click();
+    }
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function showHTMLPreviewDialog(htmlContent) {
+  const rtl = isRTL();
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5); z-index: 2147483648;
+    display: flex; align-items: center; justify-content: center;
+  `;
+
+  const dialog = document.createElement('div');
+  dialog.style.cssText = `
+    background: rgba(45, 52, 54, 0.95); border-radius: 8px;
+    padding: 30px; max-width: 500px; width: 90%;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    direction: ${rtl ? 'rtl' : 'ltr'};
+    max-height: 80vh; overflow-y: auto;
+  `;
+
+  dialog.innerHTML = `
+    <style>
+      .preview-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #fff; text-align: ${rtl ? 'right' : 'left'}; }
+      .preview-content {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 4px;
+        color: #fff;
+        line-height: 1.6;
+        margin-bottom: 15px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      .preview-content a { color: #00bfff; text-decoration: underline; cursor: pointer; }
+      .preview-content a:hover { color: #00d4ff; }
+      .preview-content b { font-weight: bold; color: #fff; }
+      .dialog-buttons { display: flex; gap: 10px; justify-content: flex-end; flex-direction: ${rtl ? 'row-reverse' : 'row'}; }
+      .dialog-btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; }
+      .dialog-btn-ok { background: #007bff; color: white; }
+      .dialog-btn-ok:hover { background: #0056b3; }
+    </style>
+    <div class="preview-title">👁️ HTML Preview</div>
+    <div class="preview-content">${htmlContent || '<em style="color: rgba(255,255,255,0.6);">Empty preview</em>'}</div>
+    <div class="dialog-buttons">
+      <button class="dialog-btn dialog-btn-ok" id="preview-close">Close</button>
+    </div>
+  `;
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+
+  dialog.querySelector('#preview-close').addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function wrapSelectedText(textarea, before, after) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selected = text.substring(start, end);
+
+  if (!selected) {
+    showConfirmDialog('Select text first');
+    return;
+  }
+
+  const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+  textarea.value = newText;
+  textarea.focus();
+  textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
 }
 
 function escapeHtml(text) {
