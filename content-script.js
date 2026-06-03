@@ -1,3 +1,5 @@
+const VERSION = "01.02";
+
 const SHOPPING_SITES = [
   'amazon.com',
   'aliexpress.com',
@@ -253,20 +255,22 @@ function showSettingsModal() {
     const overlay = document.createElement('div');
     overlay.id = 'settings-modal-overlay';
     overlay.style.cssText = `
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.5); z-index: 2147483647;
-      display: flex; align-items: center; justify-content: center;
+      position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important;
+      display: flex !important; align-items: center !important; justify-content: center !important;
+      margin: 0 !important; padding: 0 !important; border: none !important;
     `;
 
     // Create modal content
     const modal = document.createElement('div');
     modal.id = 'settings-modal';
     modal.style.cssText = `
-      background: rgba(45, 52, 54, 0.95); border-radius: 8px;
-      padding: 0; max-width: 1000px; width: 90%; max-height: 90vh;
-      overflow: auto; border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      direction: ${isRTL() ? 'rtl' : 'ltr'};
+      background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important;
+      padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important;
+      overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+      direction: ${isRTL() ? 'rtl' : 'ltr'} !important;
+      margin: 0 !important; position: relative !important;
     `;
 
     modal.innerHTML = getSettingsHTML(reminders);
@@ -311,37 +315,39 @@ function getSettingsHTML(reminders) {
 
   return `
     <style>
-      #settings-modal * { box-sizing: border-box; }
-      #settings-modal { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-      .settings-header { background: rgba(0, 0, 0, 0.4); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); color: #fff; }
-      .settings-header h1 { margin: 0; font-size: 24px; }
-      .settings-close { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; }
-      .settings-content { padding: 20px; color: #fff; }
-      .settings-table { width: 100%; border-collapse: collapse; background: rgba(45, 52, 54, 0.3); }
-      .settings-table thead { background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid rgba(255,255,255,0.15); }
-      .settings-table th { padding: 12px 16px; text-align: ${rtl ? 'right' : 'left'}; font-weight: 600; color: #fff; font-size: 14px; }
-      .settings-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 14px; text-align: ${rtl ? 'right' : 'left'}; white-space: pre-wrap; word-wrap: break-word; line-height: 1.5; }
-      .settings-table a { color: #00bfff; text-decoration: underline; cursor: pointer; }
-      .settings-table a:hover { color: #00d4ff; text-decoration: underline; }
-      .settings-table b { font-weight: bold; color: #fff; }
-      .settings-table tbody tr:hover { background: rgba(255,255,255,0.05); }
-      .settings-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: ${rtl ? 'flex-start' : 'flex-start'}; flex-direction: ${rtl ? 'row-reverse' : 'row'}; }
-      .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 6px 8px; border-radius: 4px; transition: all 0.2s; color: white; font-weight: bold; }
-      .icon-btn:hover { transform: scale(1.2); opacity: 0.8; }
-      .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
-      .btn-add { background: #28a745; color: white; font-size: 16px; }
-      .btn-add:hover { background: #218838; }
-      .btn-save { background: #007bff; color: white; font-size: 16px; }
-      .btn-save:hover { background: #0056b3; }
-      .btn-export { background: #17a2b8; color: white; font-size: 16px; }
-      .btn-export:hover { background: #138496; }
-      .btn-import { background: #6f42c1; color: white; font-size: 16px; }
-      .btn-import:hover { background: #5a32a3; }
-      .direction-toggle { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
-      .direction-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); transform: scale(1.1); }
+      #settings-modal * { box-sizing: border-box !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }
+      #settings-modal { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; all: initial !important; }
+      .settings-header { background: rgba(0, 0, 0, 0.4) !important; padding: 20px !important; display: flex !important; justify-content: space-between !important; align-items: center !important; border-bottom: 1px solid rgba(255,255,255,0.15) !important; color: #fff !important; }
+      .settings-header h1 { margin: 0 !important; font-size: 24px !important; color: #fff !important; }
+      .settings-close { background: none !important; border: none !important; color: #fff !important; font-size: 28px !important; cursor: pointer !important; padding: 0 !important; width: 32px !important; height: 32px !important; }
+      .settings-content { padding: 20px !important; color: #fff !important; }
+      .settings-table { width: 100% !important; border-collapse: collapse !important; background: rgba(45, 52, 54, 0.3) !important; border: none !important; border-spacing: 0 !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; outline: none !important; }
+      .settings-table * { border: none !important; box-shadow: none !important; outline: none !important; }
+      .settings-table thead { background: rgba(0, 0, 0, 0.3) !important; border-bottom: 1px solid rgba(255,255,255,0.15) !important; border: none !important; box-shadow: none !important; }
+      .settings-table th { padding: 12px 16px !important; text-align: ${rtl ? 'right' : 'left'} !important; font-weight: 600 !important; color: #fff !important; font-size: 14px !important; border: none !important; background: rgba(0, 0, 0, 0.3) !important; box-shadow: none !important; outline: none !important; }
+      .settings-table td { padding: 12px 16px !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; border-left: none !important; border-right: none !important; border-top: none !important; color: #fff !important; font-size: 14px !important; text-align: ${rtl ? 'right' : 'left'} !important; white-space: pre-wrap !important; word-wrap: break-word !important; line-height: 1.5 !important; background: transparent !important; box-shadow: none !important; outline: none !important; }
+      .settings-table tbody tr { border: none !important; box-shadow: none !important; outline: none !important; }
+      .settings-table a { color: #00bfff !important; text-decoration: underline !important; cursor: pointer !important; }
+      .settings-table a:hover { color: #00d4ff !important; text-decoration: underline !important; }
+      .settings-table b { font-weight: bold !important; color: #fff !important; }
+      .settings-table tbody tr:hover { background: rgba(255,255,255,0.05) !important; }
+      .settings-actions { margin-top: 20px !important; display: flex !important; gap: 10px !important; justify-content: ${rtl ? 'flex-start' : 'flex-start'} !important; flex-direction: ${rtl ? 'row-reverse' : 'row'} !important; }
+      .icon-btn { background: none !important; border: none !important; font-size: 18px !important; cursor: pointer !important; padding: 6px 8px !important; border-radius: 4px !important; transition: all 0.2s !important; color: white !important; font-weight: bold !important; }
+      .icon-btn:hover { transform: scale(1.2) !important; opacity: 0.8 !important; }
+      .btn { padding: 10px 20px !important; border: none !important; border-radius: 4px !important; cursor: pointer !important; font-size: 14px !important; font-weight: 600 !important; transition: all 0.2s !important; }
+      .btn-add { background: #28a745 !important; color: white !important; font-size: 16px !important; }
+      .btn-add:hover { background: #218838 !important; }
+      .btn-save { background: #007bff !important; color: white !important; font-size: 16px !important; }
+      .btn-save:hover { background: #0056b3 !important; }
+      .btn-export { background: #17a2b8 !important; color: white !important; font-size: 16px !important; }
+      .btn-export:hover { background: #138496 !important; }
+      .btn-import { background: #6f42c1 !important; color: white !important; font-size: 16px !important; }
+      .btn-import:hover { background: #5a32a3 !important; }
+      .direction-toggle { background: rgba(255,255,255,0.1) !important; color: white !important; border: 1px solid rgba(255,255,255,0.2) !important; padding: 6px 12px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 12px !important; font-weight: 600 !important; transition: all 0.2s !important; }
+      .direction-toggle:hover { background: rgba(255,255,255,0.2) !important; border-color: rgba(255,255,255,0.4) !important; transform: scale(1.1) !important; }
     </style>
     <div class="settings-header">
-      <h1>⚙️ ${getLabel('settings')}</h1>
+      <h1>⚙️ ${getLabel('settings')} <span style="font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 400; margin-inline-start: 8px; unicode-bidi: isolate;">v${VERSION}</span></h1>
       <div style="display: flex; gap: 8px; align-items: center;">
         <button class="direction-toggle" id="header-save" data-action="save" title="Save all changes" style="background: #007bff; border-color: #0056b3;">💾 ${getLabel('save')}</button>
         <button class="direction-toggle" id="header-add" data-action="add" title="Add new reminder" style="background: #28a745; border-color: #218838;">➕ ${getLabel('add')}</button>
