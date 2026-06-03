@@ -1,4 +1,4 @@
-const VERSION = "01.02";
+const VERSION = "01.12";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -242,16 +242,24 @@ function updatePopupDisplay() {
 }
 
 function showSettingsModal() {
-  const existing = document.getElementById('settings-modal-overlay');
-  if (existing) {
-    existing.remove();
+  const existingHost = document.getElementById('settings-shadow-host');
+  if (existingHost) {
+    existingHost.remove();
   }
 
   // Load reminders first
   chrome.storage.local.get(['reminders'], (result) => {
     const reminders = result.reminders || [];
 
-    // Create modal overlay
+    // Create shadow host
+    const shadowHost = document.createElement('div');
+    shadowHost.id = 'settings-shadow-host';
+    document.body.appendChild(shadowHost);
+
+    // Attach shadow root
+    const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+
+    // Create overlay in shadow DOM
     const overlay = document.createElement('div');
     overlay.id = 'settings-modal-overlay';
     overlay.style.cssText = `
@@ -261,7 +269,7 @@ function showSettingsModal() {
       margin: 0 !important; padding: 0 !important; border: none !important;
     `;
 
-    // Create modal content
+    // Create modal content in shadow DOM
     const modal = document.createElement('div');
     modal.id = 'settings-modal';
     modal.style.cssText = `
@@ -275,7 +283,17 @@ function showSettingsModal() {
 
     modal.innerHTML = getSettingsHTML(reminders);
     overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+
+    // Add styles and content to shadow DOM
+    const styleTag = document.createElement('style');
+    styleTag.textContent = `
+      * { all: revert !important; }
+      #settings-modal-overlay { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; border: none !important; }
+      #settings-modal { background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important; padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important; overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+      #csv-import-input { display: none !important; }
+    `;
+    shadowRoot.appendChild(styleTag);
+    shadowRoot.appendChild(overlay);
 
     // Setup event listeners
     setupSettingsModal(modal);
@@ -283,7 +301,9 @@ function showSettingsModal() {
     // Close on background click
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        overlay.remove();
+        // Remove shadow host from main document
+        const host = overlay.getRootNode().host;
+        host.remove();
         // Update popup after settings close
         updatePopupDisplay();
       }
@@ -322,11 +342,15 @@ function getSettingsHTML(reminders) {
       .settings-close { background: none !important; border: none !important; color: #fff !important; font-size: 28px !important; cursor: pointer !important; padding: 0 !important; width: 32px !important; height: 32px !important; }
       .settings-content { padding: 20px !important; color: #fff !important; }
       .settings-table { width: 100% !important; border-collapse: collapse !important; background: rgba(45, 52, 54, 0.3) !important; border: none !important; border-spacing: 0 !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; outline: none !important; }
-      .settings-table * { border: none !important; box-shadow: none !important; outline: none !important; }
+      .settings-table *, .settings-table *::before, .settings-table *::after { border: none !important; box-shadow: none !important; outline: none !important; }
       .settings-table thead { background: rgba(0, 0, 0, 0.3) !important; border-bottom: 1px solid rgba(255,255,255,0.15) !important; border: none !important; box-shadow: none !important; }
+      .settings-table thead::before, .settings-table thead::after { display: none !important; }
       .settings-table th { padding: 12px 16px !important; text-align: ${rtl ? 'right' : 'left'} !important; font-weight: 600 !important; color: #fff !important; font-size: 14px !important; border: none !important; background: rgba(0, 0, 0, 0.3) !important; box-shadow: none !important; outline: none !important; }
-      .settings-table td { padding: 12px 16px !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; border-left: none !important; border-right: none !important; border-top: none !important; color: #fff !important; font-size: 14px !important; text-align: ${rtl ? 'right' : 'left'} !important; white-space: pre-wrap !important; word-wrap: break-word !important; line-height: 1.5 !important; background: transparent !important; box-shadow: none !important; outline: none !important; }
+      .settings-table th::before, .settings-table th::after { display: none !important; }
+      .settings-table td { padding: 12px 16px !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; border-left: none !important; border-right: none !important; border-top: none !important; color: #fff !important; font-size: 14px !important; text-align: ${rtl ? 'right' : 'left'} !important; white-space: pre-wrap !important; word-wrap: break-word !important; line-height: 1.5 !important; background: transparent !important; box-shadow: none !important; outline: none !important; min-width: 150px !important; max-width: 500px !important; }
+      .settings-table td::before, .settings-table td::after { display: none !important; }
       .settings-table tbody tr { border: none !important; box-shadow: none !important; outline: none !important; }
+      .settings-table tbody tr::before, .settings-table tbody tr::after { display: none !important; }
       .settings-table a { color: #00bfff !important; text-decoration: underline !important; cursor: pointer !important; }
       .settings-table a:hover { color: #00d4ff !important; text-decoration: underline !important; }
       .settings-table b { font-weight: bold !important; color: #fff !important; }
@@ -347,7 +371,10 @@ function getSettingsHTML(reminders) {
       .direction-toggle:hover { background: rgba(255,255,255,0.2) !important; border-color: rgba(255,255,255,0.4) !important; transform: scale(1.1) !important; }
     </style>
     <div class="settings-header">
-      <h1>⚙️ ${getLabel('settings')} <span style="font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 400; margin-inline-start: 8px; unicode-bidi: isolate;">v${VERSION}</span></h1>
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h1>⚙️ ${getLabel('settings')}</h1>
+        <span style="font-size: 7px; color: rgba(255,255,255,0.35); font-weight: 300; letter-spacing: 0.5px;">v${VERSION}</span>
+      </div>
       <div style="display: flex; gap: 8px; align-items: center;">
         <button class="direction-toggle" id="header-save" data-action="save" title="Save all changes" style="background: #007bff; border-color: #0056b3;">💾 ${getLabel('save')}</button>
         <button class="direction-toggle" id="header-add" data-action="add" title="Add new reminder" style="background: #28a745; border-color: #218838;">➕ ${getLabel('add')}</button>
@@ -372,11 +399,16 @@ function getSettingsHTML(reminders) {
 
 function setupSettingsModal(modal) {
   // Close button
-  modal.querySelector('[data-close]').addEventListener('click', () => {
-    document.getElementById('settings-modal-overlay').remove();
-    // Refresh popup after closing settings
-    updatePopupDisplay();
-  });
+  const closeBtn = modal.querySelector('[data-close]');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      // Remove shadow host from main document
+      const host = modal.getRootNode().host;
+      host.remove();
+      // Refresh popup after closing settings
+      updatePopupDisplay();
+    });
+  }
 
   // Header buttons
   const headerAddBtn = modal.querySelector('#header-add');
@@ -407,7 +439,11 @@ function setupSettingsModal(modal) {
 
   if (headerImportBtn) {
     headerImportBtn.addEventListener('click', () => {
-      document.getElementById('csv-import-input').click();
+      // Find file input in shadow DOM via modal
+      const fileInput = modal.querySelector('#csv-import-input');
+      if (fileInput) {
+        fileInput.click();
+      }
     });
   }
 
@@ -438,32 +474,36 @@ function setupSettingsModal(modal) {
   }
 
   // Handle CSV file import
-  const fileInput = document.getElementById('csv-import-input');
-  fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      importFromCSV(e.target.files[0]);
-    }
-  });
+  const fileInput = modal.querySelector('#csv-import-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        importFromCSV(e.target.files[0]);
+      }
+    });
+  }
 
   // Event delegation for edit/delete on table rows
   const tableBody = modal.querySelector('tbody');
-  tableBody.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
+  if (tableBody) {
+    tableBody.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
 
-    const index = parseInt(btn.dataset.index);
-    const action = btn.dataset.action;
+      const index = parseInt(btn.dataset.index);
+      const action = btn.dataset.action;
 
-    if (action === 'edit') {
-      chrome.storage.local.get(['reminders'], (r) => {
-        const reminders = r.reminders || [];
-        const item = reminders[index];
-        showReminderDialog(index, item);
-      });
-    } else if (action === 'delete') {
-      showDeleteConfirmDialog(index);
-    }
-  });
+      if (action === 'edit') {
+        chrome.storage.local.get(['reminders'], (r) => {
+          const reminders = r.reminders || [];
+          const item = reminders[index];
+          showReminderDialog(index, item);
+        });
+      } else if (action === 'delete') {
+        showDeleteConfirmDialog(index);
+      }
+    });
+  }
 }
 
 function showReminderDialog(index, item) {
@@ -718,8 +758,9 @@ function exportToCSV() {
     console.log(csv);
     console.log('---');
 
-    // Create blob and download with timestamp filename
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    // Create blob with UTF-8 BOM for proper encoding (fixes garbled text in Excel)
+    const bom = '﻿';
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -739,7 +780,71 @@ function importFromCSV(file) {
   reader.onload = (e) => {
     try {
       const csv = e.target.result;
-      const lines = csv.trim().split('\n');
+
+      // Proper RFC 4180 CSV parser that handles multi-line quoted fields
+      const parseCSV = (text) => {
+        const rows = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          const nextChar = text[i + 1];
+
+          if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+              // Escaped quote: "" becomes "
+              current += '"';
+              i++; // Skip next quote
+            } else {
+              // Toggle quote mode
+              inQuotes = !inQuotes;
+            }
+          } else if (char === '\n' && !inQuotes) {
+            // End of row
+            rows.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+
+        if (current.trim()) {
+          rows.push(current.trim());
+        }
+
+        return rows;
+      };
+
+      const parseRow = (row) => {
+        const fields = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < row.length; i++) {
+          const char = row[i];
+          const nextChar = row[i + 1];
+
+          if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            fields.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+
+        fields.push(current.trim());
+        return fields.map(f => f.replace(/^"|"$/g, ''));
+      };
+
+      const lines = parseCSV(csv);
 
       if (lines.length < 2) {
         showConfirmDialog('Invalid CSV format');
@@ -749,12 +854,10 @@ function importFromCSV(file) {
       // Skip header and parse rows
       const reminders = [];
       for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        // Simple CSV parser (handles quoted fields)
-        const matches = line.match(/"([^"]*)"|([^,]+)/g);
-        if (matches && matches.length >= 2) {
-          const reminder = matches[0].replace(/^"|"$/g, '').replace(/""/g, '"');
-          const domain = matches[1].replace(/^"|"$/g, '').replace(/""/g, '"');
+        const fields = parseRow(lines[i]);
+        if (fields.length >= 2) {
+          const reminder = fields[0];
+          const domain = fields[1];
 
           if (reminder && domain) {
             reminders.push({ reminder, domain });
