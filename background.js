@@ -1,32 +1,54 @@
-const SHOPPING_SITES = [
-  'amazon.com',
-  'aliexpress.com',
-  'ebay.com',
-  'walmart.com',
-  'target.com',
-  'bestbuy.com',
-  'etsy.com',
-  'wish.com',
-  'gearbest.com',
-  'banggood.com',
-  'booking.com',
-  'expedia.com',
-  'airbnb.com',
-  'trivago.com'
-];
+// Same site mapping as in messages.js
+const SITE_CATEGORIES = {
+  // Shopping sites
+  'amazon.com': 'shopping',
+  'aliexpress.com': 'shopping',
+  'ebay.com': 'shopping',
+  'walmart.com': 'shopping',
+  'target.com': 'shopping',
+  'bestbuy.com': 'shopping',
+  'etsy.com': 'shopping',
+  'wish.com': 'shopping',
+  'gearbest.com': 'shopping',
+  'banggood.com': 'shopping',
+  'booking.com': 'shopping',
+  'expedia.com': 'shopping',
+  'airbnb.com': 'shopping',
+  'trivago.com': 'shopping',
 
-function isShoppingSite(url) {
+  // Israeli Finance sites
+  'sparkmeitav.ordernet.co.il': 'israeli-finance',
+  'ordernet.co.il': 'israeli-finance',
+  'online.fibi.co.il': 'israeli-finance',
+  'fibi.co.il': 'israeli-finance'
+};
+
+function getSiteCategory(url) {
   try {
     const hostname = new URL(url).hostname.toLowerCase();
-    return SHOPPING_SITES.some(site => hostname.includes(site));
+
+    // Check direct matches
+    if (SITE_CATEGORIES[hostname]) {
+      return SITE_CATEGORIES[hostname];
+    }
+
+    // Check partial matches (subdomains)
+    for (const [site, category] of Object.entries(SITE_CATEGORIES)) {
+      if (hostname.includes(site)) {
+        return SITE_CATEGORIES[site];
+      }
+    }
+
+    // Default to 'shopping' for all unknown sites
+    return 'shopping';
   } catch {
-    return false;
+    return 'shopping';
   }
 }
 
 function updateIconColor(tabId, url) {
-  const isShopping = isShoppingSite(url);
-  if (isShopping) {
+  const category = getSiteCategory(url);
+  if (category) {
     chrome.action.setIcon({
       tabId: tabId,
       path: {
@@ -54,7 +76,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 chrome.action.onClicked.addListener((tab) => {
-  chrome.tabs.sendMessage(tab.id, { action: 'togglePopup' });
+  chrome.tabs.sendMessage(tab.id, { action: 'togglePopup' }).catch(() => {
+    // Content script not loaded yet
+  });
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -62,6 +86,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.windows.create({
       url: request.url,
       incognito: true
+    });
+    sendResponse({ status: 'opened' });
+  }
+
+  if (request.action === 'openSettings') {
+    // Send message to content script to open settings modal
+    chrome.tabs.sendMessage(sender.tab.id, { action: 'showSettings' }).catch(() => {
+      // Content script not loaded, open in new tab as fallback
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('settings.html')
+      });
     });
     sendResponse({ status: 'opened' });
   }

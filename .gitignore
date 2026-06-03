@@ -26,3 +26,7 @@ yarn-error.log
 
 # Logs
 *.log
+
+# Proof & Testing files
+acc/proof/
+acc/testings/

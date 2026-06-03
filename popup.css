@@ -67,6 +67,7 @@
   align-items: center;
 }
 
+#discounts-popup-settings,
 #discounts-popup-github {
   display: flex;
   align-items: center;
@@ -77,14 +78,19 @@
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
   text-decoration: none;
 }
 
+#discounts-popup-settings:hover,
 #discounts-popup-github:hover {
   background-color: rgba(255, 255, 255, 0.1);
   transform: scale(1.1);
 }
 
+#discounts-popup-settings svg,
 #discounts-popup-github svg {
   width: 16px;
   height: 16px;
@@ -143,4 +149,15 @@
 .discounts-popup-link span {
   display: block;
   word-break: break-word;
+}
+
+.discounts-popup-text {
+  cursor: default;
+  pointer-events: none;
+}
+
+.discounts-popup-text:hover {
+  background: rgba(45, 52, 54, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: none;
 }

@@ -13,31 +13,7 @@
   ],
 
   "host_permissions": [
-    "*://amazon.com/*",
-    "*://*.amazon.com/*",
-    "*://aliexpress.com/*",
-    "*://*.aliexpress.com/*",
-    "*://ebay.com/*",
-    "*://*.ebay.com/*",
-    "*://walmart.com/*",
-    "*://*.walmart.com/*",
-    "*://target.com/*",
-    "*://*.target.com/*",
-    "*://bestbuy.com/*",
-    "*://*.bestbuy.com/*",
-    "*://etsy.com/*",
-    "*://*.etsy.com/*",
-    "*://wish.com/*",
-    "*://gearbest.com/*",
-    "*://banggood.com/*",
-    "*://booking.com/*",
-    "*://*.booking.com/*",
-    "*://expedia.com/*",
-    "*://*.expedia.com/*",
-    "*://airbnb.com/*",
-    "*://*.airbnb.com/*",
-    "*://trivago.com/*",
-    "*://*.trivago.com/*"
+    "<all_urls>"
   ],
 
   "background": {
@@ -46,34 +22,8 @@
 
   "content_scripts": [
     {
-      "matches": [
-        "*://amazon.com/*",
-        "*://*.amazon.com/*",
-        "*://aliexpress.com/*",
-        "*://*.aliexpress.com/*",
-        "*://ebay.com/*",
-        "*://*.ebay.com/*",
-        "*://walmart.com/*",
-        "*://*.walmart.com/*",
-        "*://target.com/*",
-        "*://*.target.com/*",
-        "*://bestbuy.com/*",
-        "*://*.bestbuy.com/*",
-        "*://etsy.com/*",
-        "*://*.etsy.com/*",
-        "*://wish.com/*",
-        "*://gearbest.com/*",
-        "*://banggood.com/*",
-        "*://booking.com/*",
-        "*://*.booking.com/*",
-        "*://expedia.com/*",
-        "*://*.expedia.com/*",
-        "*://airbnb.com/*",
-        "*://*.airbnb.com/*",
-        "*://trivago.com/*",
-        "*://*.trivago.com/*"
-      ],
-      "js": ["content-script.js"],
+      "matches": ["<all_urls>"],
+      "js": ["messages.js", "content-script.js"],
       "run_at": "document_end"
     }
   ],
