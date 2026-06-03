@@ -161,3 +161,29 @@
   border-color: rgba(255, 255, 255, 0.2);
   transform: none;
 }
+
+.discounts-popup-reminder {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.discounts-popup-reminder a {
+  color: #00bfff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.discounts-popup-reminder b {
+  font-weight: bold;
+  color: #fff;
+}
+
+.discounts-popup-empty {
+  padding: 20px;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

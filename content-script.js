@@ -17,7 +17,7 @@ const SHOPPING_SITES = [
 
 let popupVisible = true;
 
-function createPopup() {
+function createPopup(matchingReminders = []) {
   if (document.getElementById('discounts-popup-container')) {
     return;
   }
@@ -27,28 +27,24 @@ function createPopup() {
   styleLink.href = chrome.runtime.getURL('popup.css');
   document.head.appendChild(styleLink);
 
-  // Get messages for current site category
-  const category = getSiteCategory(window.location.hostname);
-  const messages = category ? getMessagesByCategory(category) : [];
-
-  // Build message links HTML
+  // Build reminder HTML from matching reminders
   let messagesHTML = '';
-  messages.forEach((msg, index) => {
-    const isClickable = msg.clickable !== false; // Default to clickable
-    if (isClickable && msg.url !== '#') {
+  if (matchingReminders && matchingReminders.length > 0) {
+    matchingReminders.forEach((reminder, index) => {
       messagesHTML += `
-        <a href="${msg.url}" target="_blank" class="discounts-popup-link" data-incognito="${msg.incognito}" data-index="${index}">
-          <span>${msg.icon} ${msg.label}</span>
-        </a>
-      `;
-    } else {
-      messagesHTML += `
-        <div class="discounts-popup-link discounts-popup-text">
-          <span>${msg.icon} ${msg.label}</span>
+        <div class="discounts-popup-link discounts-popup-reminder">
+          <span>${reminder.reminder}</span>
         </div>
       `;
-    }
-  });
+    });
+  } else {
+    // Empty state - show message
+    messagesHTML = `
+      <div class="discounts-popup-empty">
+        <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 20px 0;">No reminders for this domain</p>
+      </div>
+    `;
+  }
 
   const container = document.createElement('div');
   container.id = 'discounts-popup-container';
@@ -121,6 +117,19 @@ function hidePopup() {
   }
 }
 
+function getMatchingReminders() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['reminders'], (result) => {
+      const reminders = result.reminders || [];
+      const currentUrl = window.location.href.toLowerCase();
+      const matching = reminders.filter(reminder =>
+        currentUrl.includes(reminder.domain.toLowerCase())
+      );
+      resolve(matching);
+    });
+  });
+}
+
 function togglePopup() {
   if (popupVisible) {
     hidePopup();
@@ -129,14 +138,43 @@ function togglePopup() {
   }
 }
 
-if (getSiteCategory(window.location.hostname)) {
-  createPopup();
+function showEmptyDialog() {
+  // Remove existing container
+  const existing = document.getElementById('discounts-popup-container');
+  if (existing) {
+    existing.remove();
+  }
+  popupVisible = false;
+
+  // Create empty dialog
+  createPopup([]);
   showPopup();
 }
 
+// Auto popup - only show if reminders match current URL
+getMatchingReminders().then(matching => {
+  if (matching.length > 0) {
+    createPopup(matching);
+    showPopup();
+  }
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'togglePopup') {
-    togglePopup();
+    // Manual click - always show popup
+    getMatchingReminders().then(matching => {
+      if (matching.length > 0) {
+        // Remove existing container and create new one with reminders
+        const existing = document.getElementById('discounts-popup-container');
+        if (existing) existing.remove();
+        popupVisible = false;
+        createPopup(matching);
+        showPopup();
+      } else {
+        // Show empty dialog
+        showEmptyDialog();
+      }
+    });
     sendResponse({ status: 'toggled' });
   }
 });
@@ -183,6 +221,24 @@ function getLabel(key) {
   return labels[lang][key] || labels.en[key];
 }
 
+function updatePopupDisplay() {
+  getMatchingReminders().then(matching => {
+    const container = document.getElementById('discounts-popup-container');
+
+    if (matching.length > 0) {
+      // Remove old popup and create new one with updated reminders
+      if (container) container.remove();
+      popupVisible = false;
+      createPopup(matching);
+      showPopup();
+    } else {
+      // No matching reminders - hide popup
+      if (container) container.remove();
+      popupVisible = false;
+    }
+  });
+}
+
 function showSettingsModal() {
   const existing = document.getElementById('settings-modal-overlay');
   if (existing) {
@@ -222,7 +278,11 @@ function showSettingsModal() {
 
     // Close on background click
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) {
+        overlay.remove();
+        // Update popup after settings close
+        updatePopupDisplay();
+      }
     });
   });
 }
@@ -260,7 +320,7 @@ function getSettingsHTML(reminders) {
       .settings-table { width: 100%; border-collapse: collapse; background: rgba(45, 52, 54, 0.3); }
       .settings-table thead { background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid rgba(255,255,255,0.15); }
       .settings-table th { padding: 12px 16px; text-align: ${rtl ? 'right' : 'left'}; font-weight: 600; color: #fff; font-size: 14px; }
-      .settings-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 14px; text-align: ${rtl ? 'right' : 'left'}; }
+      .settings-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 14px; text-align: ${rtl ? 'right' : 'left'}; white-space: pre-wrap; word-wrap: break-word; line-height: 1.5; }
       .settings-table a { color: #00bfff; text-decoration: underline; cursor: pointer; }
       .settings-table a:hover { color: #00d4ff; text-decoration: underline; }
       .settings-table b { font-weight: bold; color: #fff; }
@@ -304,6 +364,8 @@ function setupSettingsModal(modal) {
   // Close button
   modal.querySelector('[data-close]').addEventListener('click', () => {
     document.getElementById('settings-modal-overlay').remove();
+    // Refresh popup after closing settings
+    updatePopupDisplay();
   });
 
   // Add button
@@ -314,6 +376,10 @@ function setupSettingsModal(modal) {
   // Save button
   modal.querySelector('[data-action="save"]').addEventListener('click', () => {
     showConfirmDialog(getLabel('saved'));
+    // Refresh popup after saving
+    setTimeout(() => {
+      updatePopupDisplay();
+    }, 500);
   });
 
   // Export button
@@ -789,10 +855,11 @@ function showHTMLPreviewDialog(htmlContent) {
         padding: 15px;
         border-radius: 4px;
         color: #fff;
-        line-height: 1.6;
+        line-height: 1.5;
         margin-bottom: 15px;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        white-space: pre-wrap;
       }
       .preview-content a { color: #00bfff; text-decoration: underline; cursor: pointer; }
       .preview-content a:hover { color: #00d4ff; }

@@ -47,26 +47,75 @@ function getSiteCategory(url) {
 }
 
 function updateIconColor(tabId, url) {
-  const category = getSiteCategory(url);
-  if (category) {
-    chrome.action.setIcon({
-      tabId: tabId,
-      path: {
-        16: "icons/icon-green-16.png",
-        48: "icons/icon-green-48.png",
-        128: "icons/icon-green-128.png"
-      }
-    });
-  } else {
-    chrome.action.setIcon({
-      tabId: tabId,
-      path: {
-        16: "icons/icon-yellow-16.png",
-        48: "icons/icon-yellow-48.png",
-        128: "icons/icon-yellow-128.png"
-      }
-    });
+  chrome.storage.local.get(['reminders'], (result) => {
+    const reminders = result.reminders || [];
+    const urlLower = url.toLowerCase();
+
+    // Check if any reminder matches current URL
+    const hasMatch = reminders.some(reminder =>
+      urlLower.includes(reminder.domain.toLowerCase())
+    );
+
+    if (hasMatch) {
+      // Green + blinking
+      setBlinkingIcon(tabId, 'green');
+    } else {
+      // Yellow (static)
+      setStaticIcon(tabId, 'yellow');
+    }
+  });
+}
+
+const blinkIntervals = {};
+
+function setBlinkingIcon(tabId, color) {
+  // Set green icon
+  chrome.action.setIcon({
+    tabId: tabId,
+    path: {
+      16: `icons/icon-${color}-16.png`,
+      48: `icons/icon-${color}-48.png`,
+      128: `icons/icon-${color}-128.png`
+    }
+  });
+
+  // Add blinking badge indicator
+  let badgeVisible = true;
+  const blink = () => {
+    if (badgeVisible) {
+      chrome.action.setBadgeText({ tabId: tabId, text: '●' });
+      chrome.action.setBadgeBackgroundColor({ tabId: tabId, color: '#00ff00' });
+    } else {
+      chrome.action.setBadgeText({ tabId: tabId, text: '' });
+    }
+    badgeVisible = !badgeVisible;
+  };
+
+  // Stop previous blink if exists
+  if (blinkIntervals[tabId]) {
+    clearInterval(blinkIntervals[tabId]);
   }
+
+  // Blink badge every 600ms
+  blink();
+  blinkIntervals[tabId] = setInterval(blink, 600);
+}
+
+function setStaticIcon(tabId, color) {
+  // Stop blinking if active
+  if (blinkIntervals[tabId]) {
+    clearInterval(blinkIntervals[tabId]);
+    delete blinkIntervals[tabId];
+  }
+
+  chrome.action.setIcon({
+    tabId: tabId,
+    path: {
+      16: `icons/icon-${color}-16.png`,
+      48: `icons/icon-${color}-48.png`,
+      128: `icons/icon-${color}-128.png`
+    }
+  });
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
