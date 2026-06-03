@@ -337,10 +337,20 @@ function getSettingsHTML(reminders) {
       .btn-export:hover { background: #138496; }
       .btn-import { background: #6f42c1; color: white; font-size: 16px; }
       .btn-import:hover { background: #5a32a3; }
+      .direction-toggle { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+      .direction-toggle:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); }
     </style>
     <div class="settings-header">
       <h1>⚙️ ${getLabel('settings')}</h1>
-      <button class="settings-close" data-close>✕</button>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="direction-toggle" id="header-save" data-action="save" title="Save all changes" style="background: #007bff; border-color: #0056b3;">💾 ${getLabel('save')}</button>
+        <button class="direction-toggle" id="header-add" data-action="add" title="Add new reminder" style="background: #28a745; border-color: #218838;">➕ ${getLabel('add')}</button>
+        <button class="direction-toggle" id="header-export" data-action="export" title="Export to CSV" style="background: #17a2b8; border-color: #138496;">📥 Export</button>
+        <button class="direction-toggle" id="header-import" data-action="import" title="Import from CSV" style="background: #6f42c1; border-color: #5a32a3;">📤 Import</button>
+        <button class="direction-toggle" id="toggle-ltr" data-dir="ltr" title="English (LTR)" style="opacity: ${rtl ? '0.5' : '1'}; background: ${rtl ? 'rgba(255,255,255,0.1)' : 'rgba(0,123,255,0.3)'};">LTR</button>
+        <button class="direction-toggle" id="toggle-rtl" data-dir="rtl" title="עברית (RTL)" style="opacity: ${rtl ? '1' : '0.5'}; background: ${rtl ? 'rgba(0,123,255,0.3)' : 'rgba(255,255,255,0.1)'};">RTL</button>
+        <button class="settings-close" data-close>✕</button>
+      </div>
     </div>
     <div class="settings-content">
       <table class="settings-table">
@@ -349,13 +359,7 @@ function getSettingsHTML(reminders) {
         </thead>
         <tbody>${rows}</tbody>
       </table>
-      <div class="settings-actions">
-        <button class="btn btn-add" data-action="add" title="Add new reminder">➕ ${getLabel('add')}</button>
-        <button class="btn btn-save" data-action="save" title="Save all changes">💾 ${getLabel('save')}</button>
-        <button class="btn btn-export" data-action="export" title="Export to CSV">📥 Export</button>
-        <button class="btn btn-import" data-action="import" title="Import from CSV">📤 Import</button>
-        <input type="file" id="csv-import-input" accept=".csv" style="display: none;">
-      </div>
+      <input type="file" id="csv-import-input" accept=".csv" style="display: none;">
     </div>
   `;
 }
@@ -368,29 +372,64 @@ function setupSettingsModal(modal) {
     updatePopupDisplay();
   });
 
-  // Add button
-  modal.querySelector('[data-action="add"]').addEventListener('click', () => {
-    showReminderDialog(null);
-  });
+  // Header buttons
+  const headerAddBtn = modal.querySelector('#header-add');
+  const headerSaveBtn = modal.querySelector('#header-save');
+  const headerExportBtn = modal.querySelector('#header-export');
+  const headerImportBtn = modal.querySelector('#header-import');
 
-  // Save button
-  modal.querySelector('[data-action="save"]').addEventListener('click', () => {
-    showConfirmDialog(getLabel('saved'));
-    // Refresh popup after saving
-    setTimeout(() => {
-      updatePopupDisplay();
-    }, 500);
-  });
+  if (headerAddBtn) {
+    headerAddBtn.addEventListener('click', () => {
+      showReminderDialog(null);
+    });
+  }
 
-  // Export button
-  modal.querySelector('[data-action="export"]').addEventListener('click', () => {
-    exportToCSV();
-  });
+  if (headerSaveBtn) {
+    headerSaveBtn.addEventListener('click', () => {
+      showConfirmDialog(getLabel('saved'));
+      setTimeout(() => {
+        updatePopupDisplay();
+      }, 500);
+    });
+  }
 
-  // Import button
-  modal.querySelector('[data-action="import"]').addEventListener('click', () => {
-    document.getElementById('csv-import-input').click();
-  });
+  if (headerExportBtn) {
+    headerExportBtn.addEventListener('click', () => {
+      exportToCSV();
+    });
+  }
+
+  if (headerImportBtn) {
+    headerImportBtn.addEventListener('click', () => {
+      document.getElementById('csv-import-input').click();
+    });
+  }
+
+  // LTR/RTL toggle buttons
+  const ltrBtn = modal.querySelector('#toggle-ltr');
+  const rtlBtn = modal.querySelector('#toggle-rtl');
+
+  if (ltrBtn) {
+    ltrBtn.addEventListener('click', () => {
+      document.documentElement.lang = 'en';
+      document.dir = 'ltr';
+      // Refresh modal to update RTL state
+      const overlay = document.getElementById('settings-modal-overlay');
+      if (overlay) overlay.remove();
+      showSettingsModal();
+    });
+  }
+
+  if (rtlBtn) {
+    rtlBtn.addEventListener('click', () => {
+      document.documentElement.lang = 'he';
+      document.dir = 'rtl';
+      // Refresh modal to update RTL state
+      const overlay = document.getElementById('settings-modal-overlay');
+      if (overlay) overlay.remove();
+      showSettingsModal();
+    });
+  }
 
   // Handle CSV file import
   const fileInput = document.getElementById('csv-import-input');
