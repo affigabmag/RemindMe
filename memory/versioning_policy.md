@@ -8,9 +8,23 @@ metadata:
 # RemindMe Versioning & Changelog
 
 ## Current Version
-**v01.04** — Active Column Bug Fix
+**v01.05** — Smooth Sorting UX
 
 ## Version History
+
+### v01.05 — Smooth Sorting UX (No Modal Flicker)
+- **Improvement:** Sorting now updates table in-place without modal close/reopen
+- **Result:** 
+  - No flicker or disappear-reappear effect ✅
+  - Smooth, fluent sorting experience ✅
+  - Modal stays stable while table re-renders
+  - Sort direction indicators (▲/▼) update smoothly
+- **How it works:**
+  - Sorts data in memory
+  - Re-renders only tbody element
+  - Re-attaches event listeners to new rows
+  - No modal destruction/recreation
+- **Files Modified:** content-script.js
 
 ### v01.04 — Active Column Bug Fix (Event Delegation)
 - **Bug Fixed:** Active checkbox event listeners not firing in shadow DOM

@@ -1,4 +1,4 @@
-const VERSION = "01.04";
+const VERSION = "01.05";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -519,7 +519,11 @@ function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
 }
 
 function setupSettingsModal(modal, sortBy = null, sortOrder = 'asc') {
-  // Handle column header sorting
+  // Track current sort state locally
+  let currentSortBy = sortBy;
+  let currentSortOrder = sortOrder;
+
+  // Handle column header sorting - smooth in-place update
   const headers = modal.querySelectorAll('th[data-sort]');
   headers.forEach(header => {
     const sortCol = header.dataset.sort;
@@ -528,19 +532,94 @@ function setupSettingsModal(modal, sortBy = null, sortOrder = 'asc') {
       header.addEventListener('click', () => {
         // Toggle sort order if clicking same column
         let newOrder = 'asc';
-        if (sortBy === sortCol && sortOrder === 'asc') {
+        if (currentSortBy === sortCol && currentSortOrder === 'asc') {
           newOrder = 'desc';
         }
 
+        // Update current sort state
+        currentSortBy = sortCol;
+        currentSortOrder = newOrder;
+
         chrome.storage.local.get(['reminders'], (result) => {
           const reminders = result.reminders || [];
-          const host = modal.getRootNode().host;
-          if (host) host.remove();
 
-          // Reopen with new sort
-          setTimeout(() => {
-            showSettingsModalWithSort(reminders, sortCol, newOrder);
-          }, 100);
+          // Sort the reminders
+          let sorted = [...reminders];
+          sorted.sort((a, b) => {
+            let aVal = sortCol === 'reminder' ? a.reminder : a.domain;
+            let bVal = sortCol === 'reminder' ? b.reminder : b.domain;
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+            const comparison = aVal.localeCompare(bVal);
+            return newOrder === 'asc' ? comparison : -comparison;
+          });
+
+          // Re-render tbody in place (smooth - no modal close)
+          const tbody = modal.querySelector('tbody');
+          if (tbody) {
+            tbody.innerHTML = sorted.map((item, displayIndex) => {
+              const originalIndex = reminders.indexOf(item);
+              const activeCheckbox = `<input type="checkbox" class="active-toggle" data-index="${originalIndex}" ${item.active !== false ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">`;
+              const actionCell = `<td style="text-align: center; gap: 5px; display: flex; justify-content: center;">
+                <button class="icon-btn" data-action="edit" data-index="${originalIndex}" title="Edit" style="background: #007bff;">✏️</button>
+                <button class="icon-btn" data-action="delete" data-index="${originalIndex}" title="Delete" style="background: #dc3545;">🗑️</button>
+              </td>`;
+              const reminderCell = `<td>${item.reminder}</td>`;
+              const domainCell = `<td>${escapeHtml(item.domain)}</td>`;
+              const activeCell = `<td style="text-align: center;">${activeCheckbox}</td>`;
+
+              const rtl = isRTL();
+              if (rtl) {
+                return `<tr>${actionCell}${activeCell}${domainCell}${reminderCell}</tr>`;
+              } else {
+                return `<tr>${reminderCell}${domainCell}${activeCell}${actionCell}</tr>`;
+              }
+            }).join('');
+
+            // Re-attach event listeners for new checkboxes
+            const activeToggles = modal.querySelectorAll('.active-toggle');
+            activeToggles.forEach(checkbox => {
+              checkbox.addEventListener('change', function(e) {
+                const index = parseInt(this.dataset.index);
+                chrome.storage.local.get(['reminders'], (result) => {
+                  let reminders = result.reminders || [];
+                  if (reminders[index]) {
+                    reminders[index].active = this.checked;
+                    chrome.storage.local.set({ reminders }, () => {
+                      updatePopupDisplay();
+                    });
+                  }
+                });
+              });
+            });
+
+            // Re-attach event listeners for edit/delete buttons
+            const actionBtns = modal.querySelectorAll('[data-action]');
+            actionBtns.forEach(btn => {
+              btn.addEventListener('click', () => {
+                const index = parseInt(btn.dataset.index);
+                const action = btn.dataset.action;
+
+                if (action === 'edit') {
+                  chrome.storage.local.get(['reminders'], (r) => {
+                    const reminders = r.reminders || [];
+                    const item = reminders[index];
+                    showReminderDialog(index, item);
+                  });
+                } else if (action === 'delete') {
+                  showDeleteConfirmDialog(index);
+                }
+              });
+            });
+
+            // Update header indicators
+            headers.forEach(h => {
+              h.textContent = h.textContent.replace(' ▲', '').replace(' ▼', '');
+              if (h.dataset.sort === sortCol) {
+                h.textContent += newOrder === 'asc' ? ' ▲' : ' ▼';
+              }
+            });
+          }
         });
       });
     }
