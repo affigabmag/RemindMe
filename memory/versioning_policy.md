@@ -8,9 +8,24 @@ metadata:
 # RemindMe Versioning & Changelog
 
 ## Current Version
-**v01.16** — Fixed Position & Dark Theme (Proper Implementation)
+**v01.17** — Fixed Top Position (Static Offset)
 
 ## Version History
+
+### v01.17 — Fixed Top Position (Static Offset)
+- **Fixed Modal Top Position:**
+  - Changed from `top: 50%` (percentage, changes with viewport)
+  - To: `top: 60px` (fixed pixel offset from top)
+  - Modal now stays 60px from top of viewport always
+  - Only horizontal centering: `transform: translateX(-50%)`
+  - No more vertical movement
+- **Result:**
+  - Modal top position ALWAYS 60px from top ✅
+  - Doesn't change when scrolling ✅
+  - Doesn't change when modal size changes ✅
+  - Consistent fixed position ✅
+- **Files Modified:** content-script.js
+- **Impact:** Modal positioning now truly fixed
 
 ### v01.16 — Fixed Position & Dark Theme (Proper Implementation)
 - **Fixed Modal Position (Properly):**

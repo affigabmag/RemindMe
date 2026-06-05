@@ -1,4 +1,4 @@
-const VERSION = "01.16";
+const VERSION = "01.17";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -380,11 +380,11 @@ function showSettingsModal() {
     modal.id = 'settings-modal';
     modal.style.cssText = `
       background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important;
-      padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important;
+      padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 85vh !important;
       overflow: hidden !important; border: 1px solid rgba(255,255,255,0.15) !important;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
       direction: ${isRTL() ? 'rtl' : 'ltr'} !important;
-      margin: 0 !important; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important;
+      margin: 0 !important; position: fixed !important; top: 60px !important; left: 50% !important; transform: translateX(-50%) !important;
       display: flex !important; flex-direction: column !important;
     `;
 
