@@ -1,4 +1,4 @@
-const VERSION = "01.13";
+const VERSION = "01.02";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -18,6 +18,33 @@ const SHOPPING_SITES = [
 ];
 
 let popupVisible = true;
+
+function getDomainKey() {
+  try {
+    const hostname = new URL(window.location.href).hostname;
+    return `reminder-pos-${hostname}`;
+  } catch {
+    return 'reminder-pos-default';
+  }
+}
+
+function getSavedPosition() {
+  const key = getDomainKey();
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function savePosition(x, y) {
+  const key = getDomainKey();
+  localStorage.setItem(key, JSON.stringify({ x, y }));
+}
 
 function createPopup(matchingReminders = []) {
   if (document.getElementById('discounts-popup-container')) {
@@ -50,6 +77,16 @@ function createPopup(matchingReminders = []) {
 
   const container = document.createElement('div');
   container.id = 'discounts-popup-container';
+
+  // Apply saved position or default - use !important to override CSS
+  const savedPos = getSavedPosition();
+  if (savedPos) {
+    container.style.cssText = `position: fixed !important; left: ${savedPos.x}px !important; top: ${savedPos.y}px !important; right: auto !important;`;
+  } else {
+    // Default: top-right (matches CSS default)
+    container.style.cssText = `position: fixed !important; top: 10px !important; right: 10px !important; left: auto !important;`;
+  }
+
   container.innerHTML = `
     <div id="discounts-popup-sidebar">
       <div id="discounts-popup-header">
@@ -376,12 +413,11 @@ function getSettingsHTML(reminders) {
         <span style="font-size: 7px; color: rgba(255,255,255,0.35); font-weight: 300; letter-spacing: 0.5px;">v${VERSION}</span>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <button class="direction-toggle" id="header-save" data-action="save" title="Save all changes" style="background: #007bff; border-color: #0056b3;">💾 ${getLabel('save')}</button>
         <button class="direction-toggle" id="header-add" data-action="add" title="Add new reminder" style="background: #28a745; border-color: #218838;">➕ ${getLabel('add')}</button>
         <button class="direction-toggle" id="header-export" data-action="export" title="Export to CSV" style="background: #17a2b8; border-color: #138496;">📥 Export</button>
         <button class="direction-toggle" id="header-import" data-action="import" title="Import from CSV" style="background: #6f42c1; border-color: #5a32a3;">📤 Import</button>
-        <button class="direction-toggle" id="toggle-ltr" data-dir="ltr" title="English (LTR)" style="opacity: ${rtl ? '0.6' : '1'}; background: ${rtl ? 'rgba(255,255,255,0.2)' : '#007bff'}; color: ${rtl ? 'rgba(255,255,255,0.5)' : '#fff'};">LTR</button>
-        <button class="direction-toggle" id="toggle-rtl" data-dir="rtl" title="עברית (RTL)" style="opacity: ${rtl ? '1' : '0.6'}; background: ${rtl ? '#007bff' : 'rgba(255,255,255,0.2)'}; color: ${rtl ? '#fff' : 'rgba(255,255,255,0.5)'};">RTL</button>
+        <button class="direction-toggle" id="toggle-ltr" data-dir="ltr" title="English (LTR)" style="opacity: ${rtl ? '0.7' : '1'}; background: ${rtl ? '#333333' : '#0088ff'}; color: ${rtl ? '#666666' : '#fff'}; font-weight: ${rtl ? '400' : '700'};">LTR</button>
+        <button class="direction-toggle" id="toggle-rtl" data-dir="rtl" title="עברית (RTL)" style="opacity: ${rtl ? '1' : '0.7'}; background: ${rtl ? '#0088ff' : '#333333'}; color: ${rtl ? '#fff' : '#666666'}; font-weight: ${rtl ? '700' : '400'};">RTL</button>
         <button class="settings-close" data-close>✕</button>
       </div>
     </div>
@@ -412,22 +448,12 @@ function setupSettingsModal(modal) {
 
   // Header buttons
   const headerAddBtn = modal.querySelector('#header-add');
-  const headerSaveBtn = modal.querySelector('#header-save');
   const headerExportBtn = modal.querySelector('#header-export');
   const headerImportBtn = modal.querySelector('#header-import');
 
   if (headerAddBtn) {
     headerAddBtn.addEventListener('click', () => {
       showReminderDialog(null);
-    });
-  }
-
-  if (headerSaveBtn) {
-    headerSaveBtn.addEventListener('click', () => {
-      showConfirmDialog(getLabel('saved'));
-      setTimeout(() => {
-        updatePopupDisplay();
-      }, 500);
     });
   }
 
@@ -611,7 +637,10 @@ function showReminderDialog(index, item) {
       }
       chrome.storage.local.set({ reminders }, () => {
         overlay.remove();
+        // Refresh settings modal to show updated reminder
         showSettingsModal();
+        // Also update popup display
+        updatePopupDisplay();
       });
     });
   });
@@ -1094,11 +1123,17 @@ document.addEventListener('mousemove', (e) => {
   const newX = e.clientX - dragOffsetX;
   const newY = e.clientY - dragOffsetY;
 
-  container.style.left = newX + 'px';
-  container.style.top = newY + 'px';
-  container.style.right = 'auto';
+  container.style.cssText = `position: fixed !important; left: ${newX}px !important; top: ${newY}px !important; right: auto !important;`;
 }, true);
 
 document.addEventListener('mouseup', () => {
+  if (isDragging) {
+    const container = document.getElementById('discounts-popup-container');
+    if (container) {
+      const x = parseInt(container.style.left) || 0;
+      const y = parseInt(container.style.top) || 0;
+      savePosition(x, y);
+    }
+  }
   isDragging = false;
 }, true);

@@ -77,16 +77,18 @@ function setBlinkingIcon(tabId, color) {
       48: `icons/icon-${color}-48.png`,
       128: `icons/icon-${color}-128.png`
     }
+  }).catch(() => {
+    // Tab closed or doesn't exist
   });
 
   // Add blinking badge indicator
   let badgeVisible = true;
   const blink = () => {
     if (badgeVisible) {
-      chrome.action.setBadgeText({ tabId: tabId, text: '●' });
-      chrome.action.setBadgeBackgroundColor({ tabId: tabId, color: '#00ff00' });
+      chrome.action.setBadgeText({ tabId: tabId, text: '●' }).catch(() => {});
+      chrome.action.setBadgeBackgroundColor({ tabId: tabId, color: '#00ff00' }).catch(() => {});
     } else {
-      chrome.action.setBadgeText({ tabId: tabId, text: '' });
+      chrome.action.setBadgeText({ tabId: tabId, text: '' }).catch(() => {});
     }
     badgeVisible = !badgeVisible;
   };
@@ -115,6 +117,8 @@ function setStaticIcon(tabId, color) {
       48: `icons/icon-${color}-48.png`,
       128: `icons/icon-${color}-128.png`
     }
+  }).catch(() => {
+    // Tab closed or doesn't exist
   });
 }
 
