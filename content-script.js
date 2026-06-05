@@ -1,4 +1,4 @@
-const VERSION = "01.05";
+const VERSION = "01.16";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -229,6 +229,7 @@ function getLabel(key) {
       settings: 'RemindMe Settings',
       reminder: 'Reminder',
       domain: 'Domain/URL',
+      active: 'Active',
       actions: 'Actions',
       add: 'Add Reminder',
       save: 'Save All',
@@ -244,6 +245,7 @@ function getLabel(key) {
       settings: 'הגדרות RemindMe',
       reminder: 'תזכורת',
       domain: 'דומיין/URL',
+      active: 'פעיל',
       actions: 'פעולות',
       add: 'הוסף תזכורת',
       save: 'שמור הכל',
@@ -308,10 +310,10 @@ function showSettingsModalWithSort(reminders, sortBy = null, sortOrder = 'asc') 
   modal.style.cssText = `
     background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important;
     padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important;
-    overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important;
+    overflow: hidden !important; border: 1px solid rgba(255,255,255,0.15) !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
     direction: ${isRTL() ? 'rtl' : 'ltr'} !important;
-    margin: 0 !important; position: relative !important;
+    margin: 0 !important; position: relative !important; display: flex !important; flex-direction: column !important;
   `;
 
   modal.innerHTML = getSettingsHTML(reminders, sortBy, sortOrder);
@@ -322,7 +324,9 @@ function showSettingsModalWithSort(reminders, sortBy = null, sortOrder = 'asc') 
   styleTag.textContent = `
     * { all: revert !important; }
     #settings-modal-overlay { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; border: none !important; }
-    #settings-modal { background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important; padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important; overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+    #settings-modal { background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important; padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; display: flex !important; flex-direction: column !important; }
+    .settings-header { position: sticky !important; top: 0 !important; z-index: 100 !important; }
+    .settings-content { overflow-y: auto !important; flex: 1 !important; }
     #csv-import-input { display: none !important; }
   `;
   shadowRoot.appendChild(styleTag);
@@ -368,7 +372,7 @@ function showSettingsModal() {
       position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
       background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important;
       display: flex !important; align-items: center !important; justify-content: center !important;
-      margin: 0 !important; padding: 0 !important; border: none !important;
+      margin: 0 !important; padding: 0 !important; border: none !important; width: 100% !important; height: 100% !important;
     `;
 
     // Create modal content in shadow DOM
@@ -377,10 +381,11 @@ function showSettingsModal() {
     modal.style.cssText = `
       background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important;
       padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important;
-      overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important;
+      overflow: hidden !important; border: 1px solid rgba(255,255,255,0.15) !important;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
       direction: ${isRTL() ? 'rtl' : 'ltr'} !important;
-      margin: 0 !important; position: relative !important;
+      margin: 0 !important; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important;
+      display: flex !important; flex-direction: column !important;
     `;
 
     modal.innerHTML = getSettingsHTML(reminders);
@@ -391,7 +396,9 @@ function showSettingsModal() {
     styleTag.textContent = `
       * { all: revert !important; }
       #settings-modal-overlay { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; border: none !important; }
-      #settings-modal { background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important; padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important; overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+      #settings-modal { background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important; padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; display: flex !important; flex-direction: column !important; }
+      .settings-header { position: sticky !important; top: 0 !important; z-index: 100 !important; }
+      .settings-content { overflow-y: auto !important; flex: 1 !important; }
       #csv-import-input { display: none !important; }
     `;
     shadowRoot.appendChild(styleTag);
@@ -452,8 +459,8 @@ function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
   }).join('');
 
   const headerCells = rtl
-    ? `<th data-sort="actions">${getLabel('actions')}</th><th data-sort="active">Active</th><th data-sort="domain" style="cursor: pointer;">${getLabel('domain')} ↕️</th><th data-sort="reminder" style="cursor: pointer;">${getLabel('reminder')} ↕️</th>`
-    : `<th data-sort="reminder" style="cursor: pointer;">${getLabel('reminder')} ↕️</th><th data-sort="domain" style="cursor: pointer;">${getLabel('domain')} ↕️</th><th data-sort="active">Active</th><th data-sort="actions">${getLabel('actions')}</th>`;
+    ? `<th data-sort="actions">${getLabel('actions')}</th><th data-sort="active">${getLabel('active')}</th><th data-sort="domain" style="cursor: pointer;">${getLabel('domain')} ↕️</th><th data-sort="reminder" style="cursor: pointer;">${getLabel('reminder')} ↕️</th>`
+    : `<th data-sort="reminder" style="cursor: pointer;">${getLabel('reminder')} ↕️</th><th data-sort="domain" style="cursor: pointer;">${getLabel('domain')} ↕️</th><th data-sort="active">${getLabel('active')}</th><th data-sort="actions">${getLabel('actions')}</th>`;
 
   return `
     <style>
@@ -472,6 +479,7 @@ function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
       .settings-table td { padding: 12px 16px !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; border-left: none !important; border-right: none !important; border-top: none !important; color: #fff !important; font-size: 14px !important; text-align: ${rtl ? 'right' : 'left'} !important; white-space: pre-wrap !important; word-wrap: break-word !important; line-height: 1.5 !important; background: transparent !important; box-shadow: none !important; outline: none !important; min-width: 150px !important; max-width: 500px !important; }
       .settings-table td::before, .settings-table td::after { display: none !important; }
       .settings-table tbody tr { border: none !important; box-shadow: none !important; outline: none !important; }
+      .settings-table tbody tr.hidden { display: none !important; }
       .settings-table tbody tr::before, .settings-table tbody tr::after { display: none !important; }
       .settings-table a { color: #00bfff !important; text-decoration: underline !important; cursor: pointer !important; }
       .settings-table a:hover { color: #00d4ff !important; text-decoration: underline !important; }
@@ -497,7 +505,8 @@ function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
         <h1>⚙️ ${getLabel('settings')}</h1>
         <span style="font-size: 7px; color: rgba(255,255,255,0.35); font-weight: 300; letter-spacing: 0.5px;">v${VERSION}</span>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap;">
+        <input type="text" id="settings-search" class="search-input" placeholder="🔍 Search..." style="width: 180px !important; padding: 8px 12px !important; background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 4px !important; color: #fff !important; font-size: 13px !important; box-sizing: border-box !important;" onfocus="this.style.background='rgba(0,0,0,0.5) !important'" onblur="this.style.background='rgba(0,0,0,0.3) !important'">
         <button class="direction-toggle" id="header-add" data-action="add" title="Add new reminder" style="background: #28a745; border-color: #218838;">➕ ${getLabel('add')}</button>
         <button class="direction-toggle" id="header-export" data-action="export" title="Export to CSV" style="background: #17a2b8; border-color: #138496;">📥 Export</button>
         <button class="direction-toggle" id="header-import" data-action="import" title="Import from CSV" style="background: #6f42c1; border-color: #5a32a3;">📤 Import</button>
@@ -522,6 +531,66 @@ function setupSettingsModal(modal, sortBy = null, sortOrder = 'asc') {
   // Track current sort state locally
   let currentSortBy = sortBy;
   let currentSortOrder = sortOrder;
+
+  // Handle search functionality
+  const searchInput = modal.querySelector('#settings-search');
+  console.log('🔍 [SEARCH] Input found:', !!searchInput, 'ID:', searchInput?.id);
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      console.log('\n🔍 [SEARCH] ========== FILTERING START ==========');
+      console.log('🔍 [SEARCH] Raw input:', '"' + this.value + '"');
+      const searchTerm = this.value.toLowerCase().trim();
+      console.log('🔍 [SEARCH] Term (lowercase):', '"' + searchTerm + '"');
+
+      const tbody = modal.querySelector('tbody');
+      console.log('🔍 [SEARCH] Tbody:', !!tbody);
+
+      if (tbody) {
+        const rows = tbody.querySelectorAll('tr');
+        console.log('🔍 [SEARCH] Total rows:', rows.length);
+        let visibleCount = 0;
+        let hiddenCount = 0;
+
+        rows.forEach((row, rowIdx) => {
+          const cells = row.querySelectorAll('td');
+          let allText = '';
+
+          cells.forEach((cell) => {
+            allText += ' ' + (cell.textContent || '').toLowerCase();
+          });
+
+          const matches = searchTerm === '' || allText.includes(searchTerm);
+
+          if (matches) {
+            row.classList.remove('hidden');
+            visibleCount++;
+            console.log(`  ✅ Row ${rowIdx + 1}: MATCH (text: "${allText.substring(0, 50)}...")`);
+          } else {
+            row.classList.add('hidden');
+            hiddenCount++;
+            console.log(`  ❌ Row ${rowIdx + 1}: HIDDEN (text: "${allText.substring(0, 50)}...")`);
+          }
+
+          // Debug: verify class was set
+          console.log(`     Has 'hidden' class: ${row.classList.contains('hidden')}, Computed display: "${window.getComputedStyle(row).display}"`);
+        });
+
+        console.log('🔍 [SEARCH] Result: ' + visibleCount + ' visible, ' + hiddenCount + ' hidden');
+        console.log('🔍 [SEARCH] ========== FILTERING END ==========\n');
+      }
+    });
+
+    try {
+      searchInput.focus();
+      console.log('🔍 [SEARCH] Input focused');
+    } catch (e) {
+      console.error('🔍 [SEARCH] Focus error:', e);
+    }
+  } else {
+    console.error('🔍 [SEARCH] ❌ Input NOT FOUND!');
+  }
+
 
   // Handle column header sorting - smooth in-place update
   const headers = modal.querySelectorAll('th[data-sort]');
