@@ -1,4 +1,4 @@
-const VERSION = "01.02";
+const VERSION = "01.04";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -162,7 +162,7 @@ function getMatchingReminders() {
       const reminders = result.reminders || [];
       const currentUrl = window.location.href.toLowerCase();
       const matching = reminders.filter(reminder =>
-        currentUrl.includes(reminder.domain.toLowerCase())
+        currentUrl.includes(reminder.domain.toLowerCase()) && reminder.active !== false
       );
       resolve(matching);
     });
@@ -278,6 +278,71 @@ function updatePopupDisplay() {
   });
 }
 
+function showSettingsModalWithSort(reminders, sortBy = null, sortOrder = 'asc') {
+  const existingHost = document.getElementById('settings-shadow-host');
+  if (existingHost) {
+    existingHost.remove();
+  }
+
+  // Create shadow host
+  const shadowHost = document.createElement('div');
+  shadowHost.id = 'settings-shadow-host';
+  document.body.appendChild(shadowHost);
+
+  // Attach shadow root
+  const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+
+  // Create overlay in shadow DOM
+  const overlay = document.createElement('div');
+  overlay.id = 'settings-modal-overlay';
+  overlay.style.cssText = `
+    position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    margin: 0 !important; padding: 0 !important; border: none !important;
+  `;
+
+  // Create modal content in shadow DOM
+  const modal = document.createElement('div');
+  modal.id = 'settings-modal';
+  modal.style.cssText = `
+    background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important;
+    padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important;
+    overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+    direction: ${isRTL() ? 'rtl' : 'ltr'} !important;
+    margin: 0 !important; position: relative !important;
+  `;
+
+  modal.innerHTML = getSettingsHTML(reminders, sortBy, sortOrder);
+  overlay.appendChild(modal);
+
+  // Add styles and content to shadow DOM
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `
+    * { all: revert !important; }
+    #settings-modal-overlay { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; background: rgba(0, 0, 0, 0.5) !important; z-index: 2147483647 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important; border: none !important; }
+    #settings-modal { background: rgba(45, 52, 54, 0.95) !important; border-radius: 8px !important; padding: 0 !important; max-width: 1000px !important; width: 90% !important; max-height: 90vh !important; overflow: auto !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+    #csv-import-input { display: none !important; }
+  `;
+  shadowRoot.appendChild(styleTag);
+  shadowRoot.appendChild(overlay);
+
+  // Setup event listeners
+  setupSettingsModal(modal, sortBy, sortOrder);
+
+  // Close on background click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      // Remove shadow host from main document
+      const host = overlay.getRootNode().host;
+      host.remove();
+      // Update popup after settings close
+      updatePopupDisplay();
+    }
+  });
+}
+
 function showSettingsModal() {
   const existingHost = document.getElementById('settings-shadow-host');
   if (existingHost) {
@@ -333,7 +398,7 @@ function showSettingsModal() {
     shadowRoot.appendChild(overlay);
 
     // Setup event listeners
-    setupSettingsModal(modal);
+    setupSettingsModal(modal, null, 'asc');
 
     // Close on background click
     overlay.addEventListener('click', (e) => {
@@ -348,27 +413,47 @@ function showSettingsModal() {
   });
 }
 
-function getSettingsHTML(reminders) {
+function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
   const rtl = isRTL();
-  const rows = reminders.map((item, index) => {
+
+  // Apply sorting if specified
+  let displayReminders = [...reminders];
+  if (sortBy) {
+    displayReminders.sort((a, b) => {
+      let aVal = sortBy === 'reminder' ? a.reminder : a.domain;
+      let bVal = sortBy === 'reminder' ? b.reminder : b.domain;
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+
+      const comparison = aVal.localeCompare(bVal);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }
+
+  const rows = displayReminders.map((item, displayIndex) => {
+    // Find original index for actions
+    const originalIndex = reminders.indexOf(item);
+
+    const activeCheckbox = `<input type="checkbox" class="active-toggle" data-index="${originalIndex}" ${item.active !== false ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">`;
     const actionCell = `<td style="text-align: center; gap: 5px; display: flex; justify-content: center;">
-      <button class="icon-btn" data-action="edit" data-index="${index}" title="Edit" style="background: #007bff;">✏️</button>
-      <button class="icon-btn" data-action="delete" data-index="${index}" title="Delete" style="background: #dc3545;">🗑️</button>
+      <button class="icon-btn" data-action="edit" data-index="${originalIndex}" title="Edit" style="background: #007bff;">✏️</button>
+      <button class="icon-btn" data-action="delete" data-index="${originalIndex}" title="Delete" style="background: #dc3545;">🗑️</button>
     </td>`;
     const reminderCell = `<td>${item.reminder}</td>`;
     const domainCell = `<td>${escapeHtml(item.domain)}</td>`;
+    const activeCell = `<td style="text-align: center;">${activeCheckbox}</td>`;
 
-    // For RTL, reverse the order: Actions | Domain | Reminder
+    // For RTL, reverse the order: Actions | Active | Domain | Reminder
     if (rtl) {
-      return `<tr>${actionCell}${domainCell}${reminderCell}</tr>`;
+      return `<tr>${actionCell}${activeCell}${domainCell}${reminderCell}</tr>`;
     } else {
-      return `<tr>${reminderCell}${domainCell}${actionCell}</tr>`;
+      return `<tr>${reminderCell}${domainCell}${activeCell}${actionCell}</tr>`;
     }
   }).join('');
 
   const headerCells = rtl
-    ? `<th>${getLabel('actions')}</th><th>${getLabel('domain')}</th><th>${getLabel('reminder')}</th>`
-    : `<th>${getLabel('reminder')}</th><th>${getLabel('domain')}</th><th>${getLabel('actions')}</th>`;
+    ? `<th data-sort="actions">${getLabel('actions')}</th><th data-sort="active">Active</th><th data-sort="domain" style="cursor: pointer;">${getLabel('domain')} ↕️</th><th data-sort="reminder" style="cursor: pointer;">${getLabel('reminder')} ↕️</th>`
+    : `<th data-sort="reminder" style="cursor: pointer;">${getLabel('reminder')} ↕️</th><th data-sort="domain" style="cursor: pointer;">${getLabel('domain')} ↕️</th><th data-sort="active">Active</th><th data-sort="actions">${getLabel('actions')}</th>`;
 
   return `
     <style>
@@ -433,7 +518,52 @@ function getSettingsHTML(reminders) {
   `;
 }
 
-function setupSettingsModal(modal) {
+function setupSettingsModal(modal, sortBy = null, sortOrder = 'asc') {
+  // Handle column header sorting
+  const headers = modal.querySelectorAll('th[data-sort]');
+  headers.forEach(header => {
+    const sortCol = header.dataset.sort;
+    if (sortCol === 'reminder' || sortCol === 'domain') {
+      header.style.cursor = 'pointer';
+      header.addEventListener('click', () => {
+        // Toggle sort order if clicking same column
+        let newOrder = 'asc';
+        if (sortBy === sortCol && sortOrder === 'asc') {
+          newOrder = 'desc';
+        }
+
+        chrome.storage.local.get(['reminders'], (result) => {
+          const reminders = result.reminders || [];
+          const host = modal.getRootNode().host;
+          if (host) host.remove();
+
+          // Reopen with new sort
+          setTimeout(() => {
+            showSettingsModalWithSort(reminders, sortCol, newOrder);
+          }, 100);
+        });
+      });
+    }
+  });
+
+  // Handle active checkbox toggling - attach to each checkbox directly
+  const activeToggles = modal.querySelectorAll('.active-toggle');
+  activeToggles.forEach(checkbox => {
+    checkbox.addEventListener('change', function(e) {
+      const index = parseInt(this.dataset.index);
+      chrome.storage.local.get(['reminders'], (result) => {
+        let reminders = result.reminders || [];
+        if (reminders[index]) {
+          reminders[index].active = this.checked;
+          chrome.storage.local.set({ reminders }, () => {
+            console.log('✅ Active status saved for index:', index, 'active:', this.checked);
+            updatePopupDisplay();
+          });
+        }
+      });
+    });
+  });
+
   // Close button
   const closeBtn = modal.querySelector('[data-close]');
   if (closeBtn) {
@@ -631,9 +761,11 @@ function showReminderDialog(index, item) {
     chrome.storage.local.get(['reminders'], (result) => {
       let reminders = result.reminders || [];
       if (index !== null) {
-        reminders[index] = { reminder, domain };
+        // Preserve active status when editing
+        const active = reminders[index]?.active !== false ? true : false;
+        reminders[index] = { reminder, domain, active };
       } else {
-        reminders.push({ reminder, domain });
+        reminders.push({ reminder, domain, active: true });
       }
       chrome.storage.local.set({ reminders }, () => {
         overlay.remove();

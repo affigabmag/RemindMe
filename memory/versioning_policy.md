@@ -8,9 +8,36 @@ metadata:
 # RemindMe Versioning & Changelog
 
 ## Current Version
-**v01.02** — Per-URL Dialog Position Persistence
+**v01.04** — Active Column Bug Fix
 
 ## Version History
+
+### v01.04 — Active Column Bug Fix (Event Delegation)
+- **Bug Fixed:** Active checkbox event listeners not firing in shadow DOM
+- **Root Cause:** Direct event listener attachment doesn't work in shadow DOM context
+- **Solution:** Implemented event delegation on tbody element
+- **Result:** 
+  - Disabling reminder via checkbox now saves immediately ✅
+  - Popup updates correctly when reminder disabled ✅
+  - No need for manual save button
+- **Files Modified:** content-script.js
+- **Impact:** Minor - only affects active column functionality
+
+### v01.03 — Sorting & Active Column in Settings
+- **Feature**: Sortable columns for Reminder and Domain
+  - Click column header to sort A→Z or Z→A
+  - Toggles between ascending and descending
+- **Feature**: Active column with checkboxes
+  - ✅ Checked = reminder is active (shows in popup)
+  - ☐ Unchecked = reminder is inactive (hidden from popup)
+  - No need to delete reminders, just disable them
+- **Storage Update**: Reminders now include `active: true/false` field
+- **Files Modified**: content-script.js
+- **Key Changes**:
+  - `getSettingsHTML()` - Added sorting logic and Active column
+  - `setupSettingsModal()` - Added click handlers for sort and active toggle
+  - `showSettingsModalWithSort()` - New function for sorted view
+  - `getMatchingReminders()` - Filters to show only active reminders
 
 ### v01.02 — Per-URL Dialog Position Persistence
 - **Feature**: Dialog position now saved per-domain in localStorage
