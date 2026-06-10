@@ -8,9 +8,27 @@ metadata:
 # RemindMe Versioning & Changelog
 
 ## Current Version
-**v01.17** — Fixed Top Position (Static Offset)
+**v01.27** — Formatting Fixes (Layout & Color)
 
 ## Version History
+
+### v01.27 — Formatting Fixes (Layout & Color)
+- **Fix #1:** Color picker default changed from black to light green (#90EE90)
+- **Fix #2:** Font size formatting (enlarge/reduce) no longer causes text line breaks
+  - Added `display: inline; line-height: inherit;` to all span styles
+  - Prevents text reflow and alignment issues
+  - Links, numbers, and text stay on same line
+- **Result:** All formatting options (bold, link, enlarge, reduce, color) preserve layout
+- **Files Modified:** content-script.js
+
+### v01.26 — Text Formatting Toolbar (Font Size + Color)
+- **Feature:** Added three new formatting options to Edit Reminder dialog
+  - Enlarge Font (A↑): Wraps selected text with 1.2em font size
+  - Reduce Font (A↓): Wraps selected text with 0.8em font size
+  - Color Picker: HTML color input to change selected text color
+- **Implementation:** Added buttons and color picker to toolbar, created helper functions
+- **Result:** Users can format text with size and color adjustments
+- **Files Modified:** content-script.js
 
 ### v01.17 — Fixed Top Position (Static Offset)
 - **Fixed Modal Top Position:**

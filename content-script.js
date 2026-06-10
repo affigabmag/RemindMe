@@ -1,4 +1,4 @@
-const VERSION = "01.17";
+const VERSION = "01.27";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -838,6 +838,7 @@ function showReminderDialog(index, item) {
       .dialog-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-direction: ${rtl ? 'row-reverse' : 'row'}; }
       .toolbar-btn { padding: 6px 10px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; border-radius: 3px; font-weight: 600; font-size: 12px; }
       .toolbar-btn:hover { background: rgba(255,255,255,0.2); border-color: #007bff; }
+      .toolbar-color { width: 40px; height: 36px; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; }
       .dialog-input { width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(255,255,255,0.15); color: #ffffff; font-size: 14px; font-family: inherit; text-align: ${rtl ? 'right' : 'left'}; box-sizing: border-box; }
       .dialog-input::placeholder { color: rgba(255,255,255,0.5); }
       .dialog-input:focus { outline: none; border-color: #007bff; background: rgba(255,255,255,0.15); color: #ffffff; text-shadow: 0 0 4px rgba(0,123,255,0.5); box-shadow: 0 0 0 3px rgba(0,123,255,0.25); border-width: 2px; }
@@ -855,6 +856,9 @@ function showReminderDialog(index, item) {
       <div class="dialog-toolbar">
         <button class="toolbar-btn" id="format-bold" type="button" title="Bold (select text first)"><b>B</b></button>
         <button class="toolbar-btn" id="format-link" type="button" title="Link (select text first)">🔗</button>
+        <button class="toolbar-btn" id="format-enlarge" type="button" title="Enlarge font (select text first)">A↑</button>
+        <button class="toolbar-btn" id="format-reduce" type="button" title="Reduce font (select text first)">A↓</button>
+        <input type="color" class="toolbar-color" id="format-color" title="Text color (select text first)" value="#90EE90">
         <button class="toolbar-btn" id="format-preview" type="button" title="Preview as HTML">👁️</button>
       </div>
       <textarea class="dialog-input" id="dialog-reminder" placeholder="${rtl ? 'למשל, השתמש ב-Cashback.co.il' : 'e.g., Use Cashback.co.il'}" rows="4" style="resize: vertical;">${item ? item.reminder : ''}</textarea>
@@ -886,6 +890,22 @@ function showReminderDialog(index, item) {
     showURLDialog((url) => {
       wrapSelectedText(reminderInput, `<a href="${url}">`, '</a>');
     });
+  });
+
+  dialog.querySelector('#format-enlarge').addEventListener('click', (e) => {
+    e.preventDefault();
+    enlargeSelectedText(reminderInput);
+  });
+
+  dialog.querySelector('#format-reduce').addEventListener('click', (e) => {
+    e.preventDefault();
+    reduceSelectedText(reminderInput);
+  });
+
+  dialog.querySelector('#format-color').addEventListener('change', (e) => {
+    e.preventDefault();
+    const color = e.target.value;
+    colorSelectedText(reminderInput, color);
   });
 
   dialog.querySelector('#format-preview').addEventListener('click', (e) => {
@@ -1356,6 +1376,63 @@ function wrapSelectedText(textarea, before, after) {
     return;
   }
 
+  const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+  textarea.value = newText;
+  textarea.focus();
+  textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+}
+
+function enlargeSelectedText(textarea) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selected = text.substring(start, end);
+
+  if (!selected) {
+    showConfirmDialog('Select text first');
+    return;
+  }
+
+  const before = '<span style="font-size: 1.2em; display: inline; line-height: inherit;">';
+  const after = '</span>';
+  const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+  textarea.value = newText;
+  textarea.focus();
+  textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+}
+
+function reduceSelectedText(textarea) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selected = text.substring(start, end);
+
+  if (!selected) {
+    showConfirmDialog('Select text first');
+    return;
+  }
+
+  const before = '<span style="font-size: 0.8em; display: inline; line-height: inherit;">';
+  const after = '</span>';
+  const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+  textarea.value = newText;
+  textarea.focus();
+  textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+}
+
+function colorSelectedText(textarea, color) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selected = text.substring(start, end);
+
+  if (!selected) {
+    showConfirmDialog('Select text first');
+    return;
+  }
+
+  const before = `<span style="color: ${color}; display: inline; line-height: inherit;">`;
+  const after = '</span>';
   const newText = text.substring(0, start) + before + selected + after + text.substring(end);
   textarea.value = newText;
   textarea.focus();
