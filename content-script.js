@@ -1,4 +1,4 @@
-const VERSION = "01.27";
+const VERSION = "01.28";
 
 const SHOPPING_SITES = [
   'amazon.com',
@@ -161,9 +161,11 @@ function getMatchingReminders() {
     chrome.storage.local.get(['reminders'], (result) => {
       const reminders = result.reminders || [];
       const currentUrl = window.location.href.toLowerCase();
-      const matching = reminders.filter(reminder =>
-        currentUrl.includes(reminder.domain.toLowerCase()) && reminder.active !== false
-      );
+      const matching = reminders.filter(reminder => {
+        if (reminder.active === false) return false;
+        const domains = Array.isArray(reminder.domains) ? reminder.domains : (reminder.domain ? [reminder.domain] : []);
+        return domains.some(domain => currentUrl.includes(domain.toLowerCase()));
+      });
       resolve(matching);
     });
   });
@@ -427,8 +429,8 @@ function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
   let displayReminders = [...reminders];
   if (sortBy) {
     displayReminders.sort((a, b) => {
-      let aVal = sortBy === 'reminder' ? a.reminder : a.domain;
-      let bVal = sortBy === 'reminder' ? b.reminder : b.domain;
+      let aVal = sortBy === 'reminder' ? a.reminder : (Array.isArray(a.domains) ? a.domains.join(', ') : (a.domain || ''));
+      let bVal = sortBy === 'reminder' ? b.reminder : (Array.isArray(b.domains) ? b.domains.join(', ') : (b.domain || ''));
       aVal = aVal.toLowerCase();
       bVal = bVal.toLowerCase();
 
@@ -447,7 +449,8 @@ function getSettingsHTML(reminders, sortBy = null, sortOrder = 'asc') {
       <button class="icon-btn" data-action="delete" data-index="${originalIndex}" title="Delete" style="background: #dc3545;">🗑️</button>
     </td>`;
     const reminderCell = `<td>${item.reminder}</td>`;
-    const domainCell = `<td>${escapeHtml(item.domain)}</td>`;
+    const domainsDisplay = Array.isArray(item.domains) ? item.domains.join(', ') : (item.domain || '');
+    const domainCell = `<td>${escapeHtml(domainsDisplay)}</td>`;
     const activeCell = `<td style="text-align: center;">${activeCheckbox}</td>`;
 
     // For RTL, reverse the order: Actions | Active | Domain | Reminder
@@ -839,6 +842,13 @@ function showReminderDialog(index, item) {
       .toolbar-btn { padding: 6px 10px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; border-radius: 3px; font-weight: 600; font-size: 12px; }
       .toolbar-btn:hover { background: rgba(255,255,255,0.2); border-color: #007bff; }
       .toolbar-color { width: 40px; height: 36px; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; }
+      .dialog-domains-container { display: flex; flex-direction: column; gap: 8px; }
+      .domain-input-row { display: flex; gap: 5px; align-items: center; }
+      .domain-input-row input { flex: 1; }
+      .domain-add-btn { padding: 8px 12px; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,255,0,0.15); color: #00ff00; cursor: pointer; border-radius: 3px; font-weight: 600; font-size: 14px; }
+      .domain-add-btn:hover { background: rgba(0,255,0,0.25); }
+      .domain-delete-btn { padding: 6px 10px; border: 1px solid rgba(255,0,0,0.3); background: rgba(255,0,0,0.15); color: #ff6b6b; cursor: pointer; border-radius: 3px; font-weight: 600; font-size: 12px; }
+      .domain-delete-btn:hover { background: rgba(255,0,0,0.25); }
       .dialog-input { width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; background: rgba(255,255,255,0.15); color: #ffffff; font-size: 14px; font-family: inherit; text-align: ${rtl ? 'right' : 'left'}; box-sizing: border-box; }
       .dialog-input::placeholder { color: rgba(255,255,255,0.5); }
       .dialog-input:focus { outline: none; border-color: #007bff; background: rgba(255,255,255,0.15); color: #ffffff; text-shadow: 0 0 4px rgba(0,123,255,0.5); box-shadow: 0 0 0 3px rgba(0,123,255,0.25); border-width: 2px; }
@@ -864,8 +874,9 @@ function showReminderDialog(index, item) {
       <textarea class="dialog-input" id="dialog-reminder" placeholder="${rtl ? 'למשל, השתמש ב-Cashback.co.il' : 'e.g., Use Cashback.co.il'}" rows="4" style="resize: vertical;">${item ? item.reminder : ''}</textarea>
     </div>
     <div class="dialog-form-group">
-      <label class="dialog-label">${rtl ? 'דומיין/URL' : 'Domain/URL'}</label>
-      <input type="text" class="dialog-input" id="dialog-domain" placeholder="${rtl ? 'למשל, amazon.com' : 'e.g., amazon.com'}" value="${item ? escapeHtml(item.domain) : ''}">
+      <label class="dialog-label">${rtl ? 'דומיין/URL (ניתן להוסיף מרובים)' : 'Domain/URL (can add multiple)'}</label>
+      <div class="dialog-domains-container" id="dialog-domains-container"></div>
+      <button type="button" class="domain-add-btn" id="domain-add-btn">+ ${rtl ? 'הוסף דומיין' : 'Add Domain'}</button>
     </div>
     <div class="dialog-buttons">
       <button class="dialog-btn dialog-btn-cancel" id="dialog-cancel">${getLabel('cancel')}</button>
@@ -878,6 +889,51 @@ function showReminderDialog(index, item) {
 
   const reminderInput = dialog.querySelector('#dialog-reminder');
   reminderInput.focus();
+
+  // Initialize domains
+  try {
+    const domainsContainer = dialog.querySelector('#dialog-domains-container');
+    const existingDomains = item ? (Array.isArray(item.domains) ? item.domains : (item.domain ? [item.domain] : [])) : [];
+
+    function createDomainRow(value = '') {
+      const row = document.createElement('div');
+      row.className = 'domain-input-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'dialog-input';
+      input.placeholder = rtl ? 'למשל, amazon.com' : 'e.g., amazon.com';
+      input.value = value;
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'domain-delete-btn';
+      deleteBtn.type = 'button';
+      deleteBtn.textContent = '✕';
+      deleteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        row.remove();
+      });
+      row.appendChild(input);
+      row.appendChild(deleteBtn);
+      return row;
+    }
+
+    existingDomains.forEach(domain => {
+      domainsContainer.appendChild(createDomainRow(domain));
+    });
+
+    if (existingDomains.length === 0) {
+      domainsContainer.appendChild(createDomainRow());
+    }
+
+    const addBtn = dialog.querySelector('#domain-add-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        domainsContainer.appendChild(createDomainRow());
+      });
+    }
+  } catch (e) {
+    console.error('Domain initialization error:', e);
+  }
 
   // Format buttons
   dialog.querySelector('#format-bold').addEventListener('click', (e) => {
@@ -919,9 +975,10 @@ function showReminderDialog(index, item) {
 
   dialog.querySelector('#dialog-ok').addEventListener('click', () => {
     const reminder = reminderInput.value.trim();
-    const domain = dialog.querySelector('#dialog-domain').value.trim();
+    const domainInputs = domainsContainer.querySelectorAll('input[type="text"]');
+    const domains = Array.from(domainInputs).map(input => input.value.trim()).filter(d => d);
 
-    if (!reminder || !domain) {
+    if (!reminder || domains.length === 0) {
       showConfirmDialog(getLabel('fillFields'));
       return;
     }
@@ -929,17 +986,14 @@ function showReminderDialog(index, item) {
     chrome.storage.local.get(['reminders'], (result) => {
       let reminders = result.reminders || [];
       if (index !== null) {
-        // Preserve active status when editing
         const active = reminders[index]?.active !== false ? true : false;
-        reminders[index] = { reminder, domain, active };
+        reminders[index] = { reminder, domains, active };
       } else {
-        reminders.push({ reminder, domain, active: true });
+        reminders.push({ reminder, domains, active: true });
       }
       chrome.storage.local.set({ reminders }, () => {
         overlay.remove();
-        // Refresh settings modal to show updated reminder
         showSettingsModal();
-        // Also update popup display
         updatePopupDisplay();
       });
     });

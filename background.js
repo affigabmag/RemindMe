@@ -52,9 +52,10 @@ function updateIconColor(tabId, url) {
     const urlLower = url.toLowerCase();
 
     // Check if any reminder matches current URL
-    const hasMatch = reminders.some(reminder =>
-      urlLower.includes(reminder.domain.toLowerCase())
-    );
+    const hasMatch = reminders.some(reminder => {
+      const domains = Array.isArray(reminder.domains) ? reminder.domains : (reminder.domain ? [reminder.domain] : []);
+      return domains.some(domain => urlLower.includes(domain.toLowerCase()));
+    });
 
     if (hasMatch) {
       // Green + blinking

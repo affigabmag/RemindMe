@@ -8,9 +8,27 @@ metadata:
 # RemindMe Versioning & Changelog
 
 ## Current Version
-**v01.27** — Formatting Fixes (Layout & Color)
+**v01.28** — Multiple Domains Per Reminder
 
 ## Version History
+
+### v01.28 — Multiple Domains Per Reminder
+- **Feature:** One reminder can now show on multiple domains
+- **Implementation:**
+  - Changed storage: `domain` (string) → `domains` (array)
+  - Edit dialog: Dynamic domain input rows with + to add, ✕ to remove
+  - Backward compatible: Old single-domain reminders auto-converted to array
+  - Display: Shows domains as comma-separated list in settings table
+  - Matching: Updated `getMatchingReminders()` to check if URL matches ANY domain
+  - Icon: Background script also updated for multi-domain matching
+- **UI/UX:**
+  - "Domain/URL (can add multiple)" label
+  - Light green "Add Domain" button (+)
+  - Red delete button (✕) for each domain
+  - Empty state: Starts with one blank domain input
+  - Validation: Requires at least one domain
+- **Result:** Same reminder shows on all matching domains ✅
+- **Files Modified:** content-script.js, background.js
 
 ### v01.27 — Formatting Fixes (Layout & Color)
 - **Fix #1:** Color picker default changed from black to light green (#90EE90)
